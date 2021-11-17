@@ -30,8 +30,6 @@ import io.soos.integration.domain.structure.StructureResponse;
 import jenkins.tasks.SimpleBuildStep;
 import lombok.Data;
 
-import static hudson.Util.fixEmptyAndTrim;
-
 @Data
 public class SoosSCA extends Builder implements SimpleBuildStep{
 
@@ -161,24 +159,24 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
       public FormValidation doCheckProjectName(@QueryParameter String projectName) {
 
           if( StringUtils.isBlank(projectName) ) {
-              return FormValidation.errorWithMarkup(ErrorMessages.SHOULD_NOT_BE_NULL);
+              return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_NOT_BE_NULL);
           }
           if( projectName.length() < 5 ) {
-              return FormValidation.errorWithMarkup(ErrorMessages.SHOULD_BE_MORE_THAN_5_CHARACTERS);
+              return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_BE_MORE_THAN_5_CHARACTERS);
           }
           return FormValidation.ok();
       }
       public FormValidation doCheckResultMaxWait(@QueryParameter String resultMaxWait) {
 
           if( !ObjectUtils.isEmpty(resultMaxWait) && !validateNumber(resultMaxWait) ) {
-              return FormValidation.errorWithMarkup(ErrorMessages.SHOULD_BE_A_NUMBER);
+              return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_BE_A_NUMBER);
           }
           return FormValidation.ok();
       }
       public FormValidation doCheckResultPollingInterval(@QueryParameter String resultPollingInterval) {
 
           if( !ObjectUtils.isEmpty(resultPollingInterval) && !validateNumber(resultPollingInterval) ) {
-              return FormValidation.errorWithMarkup(ErrorMessages.SHOULD_BE_A_NUMBER);
+              return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_BE_A_NUMBER);
           }
           return FormValidation.ok();
       }
