@@ -1,0 +1,61 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:entry title="Project Name *" field="projectName">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="Mode" field="mode">
+        <j:choose>
+            <select name="mode" class="setting-input">
+                <j:forEach var="mode" items="${descriptor.modes}">
+                    <f:option value="${mode.value}" >${mode.name}</f:option>
+                </j:forEach>
+            </select>
+        </j:choose>
+    </f:entry>
+    <f:entry title="On Failure" field="onFailure">
+        <j:choose>
+            <select name="onFailure" class="setting-input">
+                <j:forEach var="option" items="${descriptor.options}">
+                    <f:option value="${option.value}" >${option.name}</f:option>
+                </j:forEach>
+            </select>
+        </j:choose>
+    </f:entry>
+    <f:entry title="Operating System" field="operatingSystem">
+        <j:choose>
+            <select name="operatingSystem" class="setting-input">
+                <j:forEach var="os" items="${descriptor.oSList}">
+                    <f:option value="${os.value}" >${os.name}</f:option>
+                </j:forEach>
+            </select>
+        </j:choose>
+    </f:entry>
+    <f:entry title="Analysis Result Max Wait" field="resultMaxWait">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Analysis Result Polling Interval" field="resultPollingInterval">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Directories To Exclude" field="dirsToExclude">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Files To Exclude" field="filesToExclude">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Commit Hash" field="commitHash">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Branch Name" field="branchName">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Branch URI" field="branchURI">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Build Version" field="buildVersion">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Build URI" field="buildURI">
+        <f:textbox />
+    </f:entry>
+</j:jelly>
