@@ -116,21 +116,26 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         
         if(filesProcessed > 0) {
             soos.startAnalysis(structure.getProjectId(), structure.getAnalysisId());
-            
+            AnalysisResultResponse results;
             switch (soos.getMode()) {
                 case RUN_AND_WAIT:
-                AnalysisResultResponse results = soos.getResults(structure.getReportStatusUrl());
-                reportUrl = soos.getStructure().getReportURL();
-                listener.getLogger().println("CLICK THE LINK TO SEE THE REPORT: ".concat(reportUrl));
-                LOG.info(results.toString());
-                
-                break;
+                    results = soos.getResults(structure.getReportStatusUrl());
+                    reportUrl = soos.getStructure().getReportURL();
+                    listener.getLogger().println("CLICK THE LINK TO SEE THE REPORT: ".concat(reportUrl));
+                    LOG.info(results.toString());
+                    break;
                 case ASYNC_INIT:
-                break;
+                    listener.getLogger().println("async_init mode selected, starting asynchronous analysis...");
+                    soos.startAnalysis(structure.getProjectId(), structure.getAnalysisId());
+                    break;
                 case ASYNC_RESULT:
-                break;
+                    listener.getLogger().println("async_result mode selected, getting result from previous analysis...");
+                    results = soos.getResults(structure.getReportStatusUrl());
+                    reportUrl = soos.getStructure().getReportURL();
+                    listener.getLogger().println("CLICK THE LINK TO SEE THE REPORT: ".concat(reportUrl));
+                    LOG.info(results.toString());
+                    break;
             }
-            
         }
         
     } catch (Exception e) {
