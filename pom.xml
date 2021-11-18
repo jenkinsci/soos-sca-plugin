@@ -7,7 +7,7 @@
         <version>4.28</version>
         <relativePath />
     </parent>
-    <groupId>io.jenkins.plugins</groupId>
+    <groupId>io.soos</groupId>
     <artifactId>soos-sca</artifactId>
     <version>${revision}${changelist}</version>
     <packaging>hpi</packaging>
