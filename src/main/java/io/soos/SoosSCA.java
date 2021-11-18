@@ -104,7 +104,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         map.put(Constants.PARAM_ANALYSIS_RESULT_POLLING_INTERVAL_KEY, String.valueOf(Constants.MIN_ANALYSIS_RESULT_POLLING_INTERVAL));
     }
 
-    setEnvProperties(map, listener);
+    setEnvProperties(map);
     String reportUrl = "";
     try {
         SOOS soos = new SOOS();
@@ -209,13 +209,11 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
 
   }
 
-  private void setEnvProperties(Map<String, String> map,TaskListener listener){
+  private void setEnvProperties(Map<String, String> map){
 
     map.forEach((key, value) -> {
         if(StringUtils.isNotBlank(value)) {
             System.setProperty(key, value);
-            LOG.warn(key + ": "+ value);
-            listener.getLogger().println(key + ": "+ value);
  
         }
     });
