@@ -57,8 +57,8 @@ Log in to your Jenkins instance to install the SOOS SCA Plugin. Navigate to **Ma
 
 To manually install the plugin you have two options:
 
-1.  Download the zip file into 'plugins' directory under Jenkins data directory, and restart the server.
-2.  Download the hpi file, log in to your Jenkins instance, go to **Manage Jenkins > Manage Plugins** and select **Advanced** tab. Just choose the **soos-sca.hpi** file, and click the Upload button to install it.
+1.  Download and copy the plugin .hpi file into <jenkins-home>/plugins/, and restart the server.
+2.  Download the .hpi file, log in to your Jenkins instance, go to **Manage Jenkins > Manage Plugins** and select **Advanced** tab. Just choose the **soos-sca.hpi** file, and click the Upload button to install it.
 
 <blockquote style="margin-bottom: 10px;">
 <details>
