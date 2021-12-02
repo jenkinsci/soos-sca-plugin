@@ -16,7 +16,7 @@ SOOS is the affordable, easy-to-integrate Software Composition Analysis solution
 
 ## How to Use
 
-The **SOOS SCA Plugin** adds the ability to scan your open source software for vulnerabilities and control the introduction of new dependencies, it will send and analyse your manifest files. It can be run using either synchronous or asynchronous mode.
+The **SOOS SCA Plugin** will locate and analyze any supported manifest files under the specified directory.
 
 To use SOOS SCA Plugin you need to:
 
@@ -106,6 +106,7 @@ If you care about the result or want to break the build when issues occur, add a
 | Operating System | "Linux"  | System info regarding operating system, etc., alternatives: "Mac OS" - "Windows" |
 | Analysis Result Max Wait | 300  | Maximum seconds to wait for Analysis Result before exiting with error. |
 | Analysis Result Polling Interval | 10  | Polling interval (in seconds) for analysis result completion (success/failure.). Min 10. |
+| API Base URL | "https://api.soos.io/api/"  | The API BASE URI provided to you when subscribing to SOOS services. |
 | Directories To Exclude | ""  | List (comma separated) of directories (relative to ./) to exclude from the search for manifest files. Example - Correct: bin/start/ ... Example - Incorrect: ./bin/start/ ... Example - Incorrect: /bin/start/'|
 | Files To Exclude | ""  | List (comma separated) of files (relative to ./) to exclude from the search for manifest files. Example - Correct: bin/start/manifest.txt ... Example - Incorrect: ./bin/start/manifest.txt ... Example - Incorrect: /bin/start/manifest.txt' |
 | Commit Hash | ""  | The commit hash value from the SCM System |

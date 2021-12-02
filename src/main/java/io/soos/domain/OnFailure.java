@@ -1,4 +1,4 @@
-package io.soos;
+package io.soos.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

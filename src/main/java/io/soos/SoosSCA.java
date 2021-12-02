@@ -2,12 +2,25 @@
 package io.soos;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 
+import hudson.slaves.EnvironmentVariablesNodeProperty;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.NodePropertyDescriptor;
+import hudson.util.DescribableList;
 import hudson.util.FormValidation;
+import io.soos.commons.ErrorMessage;
+import io.soos.commons.PluginConstants;
+import io.soos.domain.Mode;
+import io.soos.domain.OnFailure;
+import io.soos.domain.OperatingSystem;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jvnet.hudson.reactor.ReactorException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
@@ -41,6 +54,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
   private String operatingSystem;
   private String resultMaxWait;
   private String resultPollingInterval;
+  private String apiBaseURI;
   private String dirsToExclude;
   private String filesToExclude;
   private String commitHash;
@@ -52,7 +66,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
   
   @DataBoundConstructor
   public SoosSCA(String projectName, String mode, String onFailure, String operatingSystem, String resultMaxWait,
-      String resultPollingInterval, String dirsToExclude, String filesToExclude, String commitHash, String branchName,
+      String resultPollingInterval, String apiBaseURI, String dirsToExclude, String filesToExclude, String commitHash, String branchName,
       String branchURI, String buildVersion, String buildURI, Mode modes) {
     this.projectName = projectName;
     this.mode = mode;
@@ -60,6 +74,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
     this.operatingSystem = operatingSystem;
     this.resultMaxWait = resultMaxWait;
     this.resultPollingInterval = resultPollingInterval;
+    this.apiBaseURI = apiBaseURI;
     this.dirsToExclude = dirsToExclude;
     this.filesToExclude = filesToExclude;
     this.commitHash = commitHash;
@@ -75,81 +90,62 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
 
     Map<String, String> map = new HashMap<String,String>();
 
-    String dirsToExclude = addSoosDirToExclusion(this.dirsToExclude);
-    map.put(Constants.PARAM_PROJECT_NAME_KEY, this.projectName);
-    map.put(Constants.PARAM_MODE_KEY, this.mode);
-    map.put(Constants.PARAM_ON_FAILURE_KEY, this.onFailure);
-    map.put(Constants.PARAM_DIRS_TO_EXCLUDE_KEY, dirsToExclude);
-    map.put(Constants.PARAM_FILES_TO_EXCLUDE_KEY, this.filesToExclude);
-    map.put(Constants.PARAM_WORKSPACE_DIR_KEY, env.get("WORKSPACE"));
-    map.put(Constants.PARAM_CHECKOUT_DIR_KEY, env.get("WORKSPACE"));
-    map.put(Constants.PARAM_API_BASE_URI_KEY,"https://dev-api.soos.io/api/"); //Constants.SOOS_DEFAULT_API_URL
-    map.put(Constants.PARAM_ANALYSIS_RESULT_MAX_WAIT_KEY, this.resultMaxWait);
-    map.put(Constants.PARAM_ANALYSIS_RESULT_POLLING_INTERVAL_KEY, this.resultPollingInterval);
-    map.put(Constants.PARAM_OPERATING_ENVIRONMENT_KEY, this.operatingSystem); // GETOUT
-    map.put(Constants.PARAM_BRANCH_NAME_KEY, this.branchName); 
-    map.put(Constants.PARAM_BRANCH_URI_KEY, this.branchURI);        
-    map.put(Constants.PARAM_COMMIT_HASH_KEY, this.commitHash);     
-    map.put(Constants.PARAM_BUILD_VERSION_KEY, this.buildVersion);
-    map.put(Constants.PARAM_BUILD_URI_KEY, this.buildURI);
-    map.put(Constants.PARAM_INTEGRATION_NAME_KEY, PluginConstants.INTEGRATION_NAME);
-    map.put("SOOS_CLIENT_ID", env.get("SOOS_CLIENT_ID"));
-    map.put("SOOS_API_KEY", env.get("SOOS_API_KEY"));
+    map.putAll(populateContext(env));
 
-    
-    if(StringUtils.isBlank(this.resultMaxWait)) {
-        map.put(Constants.PARAM_ANALYSIS_RESULT_MAX_WAIT_KEY, String.valueOf(Constants.MIN_RECOMMENDED_ANALYSIS_RESULT_MAX_WAIT));
-    }
-    if(StringUtils.isBlank(this.resultPollingInterval)) {
-        map.put(Constants.PARAM_ANALYSIS_RESULT_POLLING_INTERVAL_KEY, String.valueOf(Constants.MIN_ANALYSIS_RESULT_POLLING_INTERVAL));
-    }
+    map.putAll(getEnvironmentVariables());
 
     setEnvProperties(map);
-    String reportUrl = "";
     try {
         SOOS soos = new SOOS();
-       
+
         StructureResponse structure = soos.getStructure();
         System.out.println(structure.toString());
         long filesProcessed = soos.sendManifestFiles(structure.getProjectId(), structure.getAnalysisId());
-        LOG.info("File processed: ".concat(String.valueOf(filesProcessed)));
-        
+        StringBuilder fileProcessed = new StringBuilder("File processed: ").append(String.valueOf(filesProcessed));
+        listener.getLogger().println(fileProcessed);
+        LOG.info(fileProcessed.toString());
+
         if(filesProcessed > 0) {
-            soos.startAnalysis(structure.getProjectId(), structure.getAnalysisId());
             AnalysisResultResponse results;
+            String reportUrl = soos.getStructure().getReportURL();
             switch (soos.getMode()) {
                 case RUN_AND_WAIT:
+                    soos.startAnalysis(structure.getProjectId(), structure.getAnalysisId());
+                    listener.getLogger().println(PluginConstants.RUN_AND_WAIT_MODE_SELECTED);
                     results = soos.getResults(structure.getReportStatusUrl());
-                    reportUrl = soos.getStructure().getReportURL();
-                    listener.getLogger().println("CLICK THE LINK TO SEE THE REPORT: ".concat(reportUrl));
+                    listener.hyperlink(reportUrl,PluginConstants.LINK_TEXT);
                     LOG.info(results.toString());
                     break;
                 case ASYNC_INIT:
-                    listener.getLogger().println("async_init mode selected, starting asynchronous analysis...");
                     soos.startAnalysis(structure.getProjectId(), structure.getAnalysisId());
+                    listener.getLogger().println(PluginConstants.ASYNC_INIT_MODE_SELECTED);
                     break;
                 case ASYNC_RESULT:
-                    listener.getLogger().println("async_result mode selected, getting result from previous analysis...");
+                    listener.getLogger().println(PluginConstants.ASYNC_RESULT_MODE_SELECTED);
                     results = soos.getResults(structure.getReportStatusUrl());
-                    reportUrl = soos.getStructure().getReportURL();
-                    listener.getLogger().println("CLICK THE LINK TO SEE THE REPORT: ".concat(reportUrl));
+                    listener.hyperlink(reportUrl,PluginConstants.LINK_TEXT);
                     LOG.info(results.toString());
                     break;
             }
         }
         
     } catch (Exception e) {
+        StringBuilder errorMsg = new StringBuilder("SOOS SCA cannot be done, error: ").append(e);
         if(this.onFailure.equals(PluginConstants.FAIL_THE_BUILD)){
-            listener.error("SOOS SCA cannot be done, error: ".concat(e.getMessage()).concat("- the build has failed!"));
+            errorMsg.append(" - the build has failed!");
+            listener.error(errorMsg.toString());
             run.setResult(Result.FAILURE);
             return;
-        } 
-        listener.getLogger().println("SOOS SCA cannot be done, error: ".concat(e.getMessage()).concat("- Continuing the build... "));
-    } 
+        }
+        errorMsg.append(" - Continuing the build... ");
+        listener.getLogger().println(errorMsg);
+    }
   }
 
-  @Extension
-  public static final class SoosSCADescriptor extends BuildStepDescriptor<Builder> {
+    @Extension
+    public static final class SoosSCADescriptor extends BuildStepDescriptor<Builder> {
+
+      String apiBaseURI;
 
       @Override
       public boolean isApplicable(Class<? extends AbstractProject> jobType) {
@@ -158,7 +154,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
 
       @Override
       public String getDisplayName() {
-          return "SOOS SCA";
+          return PluginConstants.DISPLAY_NAME;
       }
 
       public FormValidation doCheckProjectName(@QueryParameter String projectName) {
@@ -166,8 +162,8 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
           if( StringUtils.isBlank(projectName) ) {
               return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_NOT_BE_NULL);
           }
-          if( projectName.length() < 5 ) {
-              return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_BE_MORE_THAN_5_CHARACTERS);
+          if( projectName.length() < PluginConstants.MIN_NUMBER_OF_CHARACTERS ) {
+              return FormValidation.errorWithMarkup(ErrorMessage.shouldBeMoreThanXCharacters(PluginConstants.MIN_NUMBER_OF_CHARACTERS));
           }
           return FormValidation.ok();
       }
@@ -186,6 +182,10 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
           return FormValidation.ok();
       }
 
+      public void doCheckApiBaseURI(@QueryParameter String apiBaseURI){
+          this.apiBaseURI = apiBaseURI;
+      }
+
       public Mode[] getModes() {
           return Mode.values();
       }
@@ -198,31 +198,68 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
           return OperatingSystem.values();
       }
 
+      public String getDefaultBaseURI() {
+          return StringUtils.isEmpty(apiBaseURI) ? Constants.SOOS_DEFAULT_API_URL : this.apiBaseURI;
+      }
+
       private Boolean validateNumber(String value) {
-          try {
-              Integer.parseInt(value);
-              return true;
-          } catch ( Exception e ){
-              return false;
-          }
+          return StringUtils.isNumeric(value);
       }
 
   }
+
+    private Map<String, String> populateContext(EnvVars env) {
+        Map<String, String> map = new HashMap<String,String>();
+
+
+
+        String dirsToExclude = addSoosDirToExclusion(this.dirsToExclude);
+        map.put(Constants.PARAM_PROJECT_NAME_KEY, this.projectName);
+        map.put(Constants.PARAM_MODE_KEY, this.mode);
+        map.put(Constants.PARAM_ON_FAILURE_KEY, this.onFailure);
+        map.put(Constants.PARAM_DIRS_TO_EXCLUDE_KEY, dirsToExclude);
+        map.put(Constants.PARAM_FILES_TO_EXCLUDE_KEY, this.filesToExclude);
+        map.put(Constants.PARAM_WORKSPACE_DIR_KEY, env.get(PluginConstants.WORKSPACE));
+        map.put(Constants.PARAM_CHECKOUT_DIR_KEY, env.get(PluginConstants.WORKSPACE));
+        map.put(Constants.PARAM_ANALYSIS_RESULT_MAX_WAIT_KEY, this.resultMaxWait);
+        map.put(Constants.PARAM_ANALYSIS_RESULT_POLLING_INTERVAL_KEY, this.resultPollingInterval);
+        map.put(Constants.PARAM_OPERATING_ENVIRONMENT_KEY, this.operatingSystem);
+        map.put(Constants.PARAM_API_BASE_URI_KEY, this.apiBaseURI);
+        map.put(Constants.PARAM_BRANCH_NAME_KEY, this.branchName);
+        map.put(Constants.PARAM_BRANCH_URI_KEY, this.branchURI);
+        map.put(Constants.PARAM_COMMIT_HASH_KEY, this.commitHash);
+        map.put(Constants.PARAM_BUILD_VERSION_KEY, this.buildVersion);
+        map.put(Constants.PARAM_BUILD_URI_KEY, this.buildURI);
+        map.put(Constants.PARAM_INTEGRATION_NAME_KEY, PluginConstants.INTEGRATION_NAME);
+        map.put(PluginConstants.SOOS_CLIENT_ID, env.get(PluginConstants.SOOS_CLIENT_ID));
+        map.put(PluginConstants.SOOS_API_KEY, env.get(PluginConstants.SOOS_API_KEY));
+
+
+        if(StringUtils.isBlank(this.resultMaxWait)) {
+            map.put(Constants.PARAM_ANALYSIS_RESULT_MAX_WAIT_KEY, String.valueOf(Constants.MIN_RECOMMENDED_ANALYSIS_RESULT_MAX_WAIT));
+        }
+        if(StringUtils.isBlank(this.resultPollingInterval)) {
+            map.put(Constants.PARAM_ANALYSIS_RESULT_POLLING_INTERVAL_KEY, String.valueOf(Constants.MIN_ANALYSIS_RESULT_POLLING_INTERVAL));
+        }
+        if(StringUtils.isBlank(this.apiBaseURI)){
+            map.put(Constants.PARAM_API_BASE_URI_KEY, Constants.SOOS_DEFAULT_API_URL);
+        }
+
+        return map;
+    }
 
   private void setEnvProperties(Map<String, String> map){
 
     map.forEach((key, value) -> {
         if(StringUtils.isNotBlank(value)) {
             System.setProperty(key, value);
- 
         }
     });
   }
 
   private String addSoosDirToExclusion(String dirs){
       if(StringUtils.isNotBlank(dirs)){
-          StringBuilder stringBuilder = new StringBuilder();
-          stringBuilder.append(dirs).append(",").append(PluginConstants.SOOS_DIR_NAME);
+          StringBuilder stringBuilder = new StringBuilder(dirs).append(",").append(PluginConstants.SOOS_DIR_NAME);
            
           return stringBuilder.toString();
       } 
@@ -230,9 +267,13 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
       return PluginConstants.SOOS_DIR_NAME;
   }
 
+  private Map<String, String> getEnvironmentVariables(){
 
+      Jenkins jenkins = Jenkins.get();
+      DescribableList<NodeProperty<?>, NodePropertyDescriptor> globalNodeProperties = jenkins.getGlobalNodeProperties();
+      List<EnvironmentVariablesNodeProperty> envVarsNodePropertyList = globalNodeProperties.getAll(EnvironmentVariablesNodeProperty.class);
+      EnvironmentVariablesNodeProperty envVarNodeProperty = envVarsNodePropertyList.get(0);
 
-
-/* */
-
+      return new LinkedHashMap<>(envVarNodeProperty.getEnvVars());
+  }
 }

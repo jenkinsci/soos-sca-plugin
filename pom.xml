@@ -19,8 +19,7 @@
         <java.level>8</java.level>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
     </properties>
-    <name>Soos SCA</name>
-    <description>Scan your open source software for vulnerabilities and control the introduction of new dependencies</description>
+    <name>SOOS SCA</name>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
 
     <dependencyManagement>
@@ -71,7 +70,7 @@
         <dependency>
             <groupId>io.soos</groupId>
             <artifactId>sca</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.4</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
