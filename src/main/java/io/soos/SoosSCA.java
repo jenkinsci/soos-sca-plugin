@@ -21,7 +21,6 @@ import io.soos.domain.OperatingSystem;
 import jenkins.model.Jenkins;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -112,7 +111,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
                     case RUN_AND_WAIT:
                         listener.getLogger().println(PluginConstants.RUN_AND_WAIT_MODE_SELECTED);
                         startAnalysis(soos);
-                        getResult(soos);
+                        processResult(soos);
                         listener.hyperlink(reportUrl,PluginConstants.LINK_TEXT);
                         break;
                     case ASYNC_INIT:
@@ -121,7 +120,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
                         break;
                     case ASYNC_RESULT:
                         listener.getLogger().println(PluginConstants.ASYNC_RESULT_MODE_SELECTED);
-                        getResult(soos);
+                        processResult(soos);
                         listener.hyperlink(reportUrl,PluginConstants.LINK_TEXT);
                         break;
                 }
@@ -144,7 +143,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         soos.startAnalysis(structure.getProjectId(), structure.getAnalysisId());
     }
 
-    private void getResult(SOOS soos) throws Exception {
+    private void processResult(SOOS soos) throws Exception {
         StructureResponse structure = soos.getStructure();
         soos.getResults(structure.getReportStatusUrl());
     }
@@ -169,22 +168,21 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
 
             if( StringUtils.isBlank(projectName) ) {
               return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_NOT_BE_NULL);
-            }
-            if( projectName.length() < PluginConstants.MIN_NUMBER_OF_CHARACTERS ) {
+            } else if( projectName.length() < PluginConstants.MIN_NUMBER_OF_CHARACTERS ) {
               return FormValidation.errorWithMarkup(ErrorMessage.shouldBeMoreThanXCharacters(PluginConstants.MIN_NUMBER_OF_CHARACTERS));
             }
             return FormValidation.ok();
         }
         public FormValidation doCheckResultMaxWait(@QueryParameter String resultMaxWait) {
 
-            if( Utils.validateIsNotEmptyAndIsNumeric(resultMaxWait) ) {
+            if( !Utils.validateIsNumeric(resultMaxWait) ) {
               return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_BE_A_NUMBER);
             }
             return FormValidation.ok();
         }
         public FormValidation doCheckResultPollingInterval(@QueryParameter String resultPollingInterval) {
 
-            if( Utils.validateIsNotEmptyAndIsNumeric(resultPollingInterval) ) {
+            if( !Utils.validateIsNumeric(resultPollingInterval) ) {
               return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_BE_A_NUMBER);
             }
             return FormValidation.ok();

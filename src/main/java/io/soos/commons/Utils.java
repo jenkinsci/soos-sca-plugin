@@ -4,7 +4,12 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 public class Utils {
-    public static Boolean validateIsNotEmptyAndIsNumeric(String value) {
-        return !ObjectUtils.isEmpty(value) && !StringUtils.isNumeric(value);
+    public static Boolean validateIsNumeric(String value) {
+        try {
+            return !StringUtils.isNumeric(value);
+        } catch (Exception e) {
+            System.out.println(e);
+            return false;
+        }
     }
 }
