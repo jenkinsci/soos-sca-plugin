@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+    Scan your open source software for vulnerabilities and control the introduction of new dependencies.
+</div>
