@@ -110,17 +110,17 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
                 switch (soos.getMode()) {
                     case RUN_AND_WAIT:
                         listener.getLogger().println(PluginConstants.RUN_AND_WAIT_MODE_SELECTED);
-                        startAnalysis(soos);
-                        processResult(soos);
+                        startAnalysis(soos, structure);
+                        processResult(soos, structure);
                         listener.hyperlink(reportUrl,PluginConstants.LINK_TEXT);
                         break;
                     case ASYNC_INIT:
-                        startAnalysis(soos);
+                        startAnalysis(soos, structure);
                         listener.getLogger().println(PluginConstants.ASYNC_INIT_MODE_SELECTED);
                         break;
                     case ASYNC_RESULT:
                         listener.getLogger().println(PluginConstants.ASYNC_RESULT_MODE_SELECTED);
-                        processResult(soos);
+                        processResult(soos, structure);
                         listener.hyperlink(reportUrl,PluginConstants.LINK_TEXT);
                         break;
                 }
@@ -138,13 +138,11 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
             listener.getLogger().println(errorMsg);
         }
     }
-    private void startAnalysis(SOOS soos) throws Exception {
-        StructureResponse structure = soos.getStructure();
+    private void startAnalysis( SOOS soos, StructureResponse structure ) throws Exception {
         soos.startAnalysis(structure.getProjectId(), structure.getAnalysisId());
     }
 
-    private void processResult(SOOS soos) throws Exception {
-        StructureResponse structure = soos.getStructure();
+    private void processResult( SOOS soos, StructureResponse structure ) throws Exception {
         soos.getResults(structure.getReportStatusUrl());
     }
 
@@ -204,8 +202,14 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
           return OperatingSystem.values();
         }
 
+        public int getDefaultAnalysisResultMaxWait(){
+            return Constants.MIN_RECOMMENDED_ANALYSIS_RESULT_MAX_WAIT;
+        }
+        public int getDefaultAnalysisResultPollingInterval(){
+            return Constants.MIN_ANALYSIS_RESULT_POLLING_INTERVAL;
+        }
         public String getDefaultBaseURI() {
-            return StringUtils.isEmpty(apiBaseURI) ? Constants.SOOS_DEFAULT_API_URL : this.apiBaseURI;
+            return Constants.SOOS_DEFAULT_API_URL;
         }
 
     }
