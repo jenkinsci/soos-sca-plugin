@@ -1,10 +1,8 @@
 
 package io.soos;
+import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 import hudson.slaves.EnvironmentVariablesNodeProperty;
@@ -22,6 +20,9 @@ import jenkins.model.Jenkins;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
@@ -97,7 +98,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         setEnvProperties(map);
         try {
             SOOS soos = new SOOS();
-
+            soos.getContext().setScriptVersion(getVersionFromProperties());
             StructureResponse structure = soos.getStructure();
             System.out.println(structure.toString());
             long filesProcessed = soos.sendManifestFiles(structure.getProjectId(), structure.getAnalysisId());
@@ -274,5 +275,16 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         EnvironmentVariablesNodeProperty envVarNodeProperty = envVarsNodePropertyList.get(0);
 
         return new LinkedHashMap<>(envVarNodeProperty.getEnvVars());
+    }
+    private String getVersionFromProperties(){
+        MavenXpp3Reader reader = new MavenXpp3Reader();
+        Model model = null;
+        try {
+            model = reader.read(new FileReader(PluginConstants.POM_FILE));
+        } catch (XmlPullParserException | IOException e) {
+            StringBuilder error = new StringBuilder("Cannot read file ").append("'").append(PluginConstants.POM_FILE).append("'");
+            LOG.error(error.toString(), e);
+        }
+        return model.getVersion();
     }
 }
