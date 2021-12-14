@@ -100,7 +100,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
             SOOS soos = new SOOS();
             soos.getContext().setScriptVersion(getVersionFromProperties());
             StructureResponse structure = soos.getStructure();
-            System.out.println(structure.toString());
             long filesProcessed = soos.sendManifestFiles(structure.getProjectId(), structure.getAnalysisId());
             StringBuilder fileProcessed = new StringBuilder("File processed: ").append(String.valueOf(filesProcessed));
             listener.getLogger().println(fileProcessed);
@@ -281,10 +280,11 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         Model model = null;
         try {
             model = reader.read(new FileReader(PluginConstants.POM_FILE));
+            return model.getVersion();
         } catch (XmlPullParserException | IOException e) {
             StringBuilder error = new StringBuilder("Cannot read file ").append("'").append(PluginConstants.POM_FILE).append("'");
             LOG.error(error.toString(), e);
         }
-        return model.getVersion();
+        return null;
     }
 }
