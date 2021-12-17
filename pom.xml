@@ -9,12 +9,10 @@
     </parent>
     <groupId>io.soos</groupId>
     <artifactId>soos-sca</artifactId>
-    <version>${revision}${changelist}</version>
+    <version>1.0.0</version>
     <packaging>hpi</packaging>
     <properties>
         <enforcer.skip>true</enforcer.skip>
-        <revision>1.0.0</revision>
-        <changelist></changelist>
         <jenkins.version>2.277.1</jenkins.version>
         <java.level>8</java.level>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
@@ -82,5 +80,12 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.7.32</version>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 </project>

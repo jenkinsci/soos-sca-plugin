@@ -1,10 +1,8 @@
 
 package io.soos;
+import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 import hudson.slaves.EnvironmentVariablesNodeProperty;
@@ -22,6 +20,9 @@ import jenkins.model.Jenkins;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
@@ -97,9 +98,8 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         setEnvProperties(map);
         try {
             SOOS soos = new SOOS();
-
+            soos.getContext().setScriptVersion(getVersionFromProperties());
             StructureResponse structure = soos.getStructure();
-            System.out.println(structure.toString());
             long filesProcessed = soos.sendManifestFiles(structure.getProjectId(), structure.getAnalysisId());
             StringBuilder fileProcessed = new StringBuilder("File processed: ").append(String.valueOf(filesProcessed));
             listener.getLogger().println(fileProcessed);
@@ -110,17 +110,17 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
                 switch (soos.getMode()) {
                     case RUN_AND_WAIT:
                         listener.getLogger().println(PluginConstants.RUN_AND_WAIT_MODE_SELECTED);
-                        startAnalysis(soos);
-                        processResult(soos);
+                        startAnalysis(soos, structure);
+                        processResult(soos, structure);
                         listener.hyperlink(reportUrl,PluginConstants.LINK_TEXT);
                         break;
                     case ASYNC_INIT:
-                        startAnalysis(soos);
+                        startAnalysis(soos, structure);
                         listener.getLogger().println(PluginConstants.ASYNC_INIT_MODE_SELECTED);
                         break;
                     case ASYNC_RESULT:
                         listener.getLogger().println(PluginConstants.ASYNC_RESULT_MODE_SELECTED);
-                        processResult(soos);
+                        processResult(soos, structure);
                         listener.hyperlink(reportUrl,PluginConstants.LINK_TEXT);
                         break;
                 }
@@ -138,13 +138,11 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
             listener.getLogger().println(errorMsg);
         }
     }
-    private void startAnalysis(SOOS soos) throws Exception {
-        StructureResponse structure = soos.getStructure();
+    private void startAnalysis( SOOS soos, StructureResponse structure ) throws Exception {
         soos.startAnalysis(structure.getProjectId(), structure.getAnalysisId());
     }
 
-    private void processResult(SOOS soos) throws Exception {
-        StructureResponse structure = soos.getStructure();
+    private void processResult( SOOS soos, StructureResponse structure ) throws Exception {
         soos.getResults(structure.getReportStatusUrl());
     }
 
@@ -204,8 +202,14 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
           return OperatingSystem.values();
         }
 
+        public int getDefaultAnalysisResultMaxWait(){
+            return Constants.MIN_RECOMMENDED_ANALYSIS_RESULT_MAX_WAIT;
+        }
+        public int getDefaultAnalysisResultPollingInterval(){
+            return Constants.MIN_ANALYSIS_RESULT_POLLING_INTERVAL;
+        }
         public String getDefaultBaseURI() {
-            return StringUtils.isEmpty(apiBaseURI) ? Constants.SOOS_DEFAULT_API_URL : this.apiBaseURI;
+            return Constants.SOOS_DEFAULT_API_URL;
         }
 
     }
@@ -270,5 +274,17 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         EnvironmentVariablesNodeProperty envVarNodeProperty = envVarsNodePropertyList.get(0);
 
         return new LinkedHashMap<>(envVarNodeProperty.getEnvVars());
+    }
+    private String getVersionFromProperties(){
+        MavenXpp3Reader reader = new MavenXpp3Reader();
+        Model model = null;
+        try {
+            model = reader.read(new FileReader(PluginConstants.POM_FILE));
+            return model.getVersion();
+        } catch (XmlPullParserException | IOException e) {
+            StringBuilder error = new StringBuilder("Cannot read file ").append("'").append(PluginConstants.POM_FILE).append("'");
+            LOG.error(error.toString(), e);
+        }
+        return null;
     }
 }

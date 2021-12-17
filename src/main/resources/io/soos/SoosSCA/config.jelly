@@ -32,13 +32,13 @@
         </j:choose>
     </f:entry>
     <f:entry title="Analysis Result Max Wait" field="resultMaxWait">
-        <f:textbox />
+        <f:textbox default="${descriptor.defaultAnalysisResultMaxWait}"/>
     </f:entry>
     <f:entry title="Analysis Result Polling Interval" field="resultPollingInterval">
-        <f:textbox />
+        <f:textbox default="${descriptor.defaultAnalysisResultPollingInterval}"/>
     </f:entry>
     <f:entry title="API Base URL" field="apiBaseURI">
-        <f:textbox value="${descriptor.defaultBaseURI}"/>
+        <f:textbox default="${descriptor.defaultBaseURI}"/>
     </f:entry>
     <f:entry title="Directories To Exclude" field="dirsToExclude">
         <f:textbox />
