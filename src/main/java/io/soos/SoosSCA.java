@@ -10,12 +10,17 @@ import hudson.slaves.NodeProperty;
 import hudson.slaves.NodePropertyDescriptor;
 import hudson.util.DescribableList;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import io.soos.commons.ErrorMessage;
 import io.soos.commons.PluginConstants;
 import io.soos.commons.Utils;
 import io.soos.domain.Mode;
 import io.soos.domain.OnFailure;
 import io.soos.domain.OperatingSystem;
+import io.soos.integration.commons.Constants;
+import io.soos.integration.domain.SOOS;
+import io.soos.integration.domain.analysis.AnalysisResultResponse;
+import io.soos.integration.domain.structure.StructureResponse;
 import jenkins.model.Jenkins;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,9 +43,6 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import io.soos.integration.commons.Constants;
-import io.soos.integration.domain.SOOS;
-import io.soos.integration.domain.structure.StructureResponse;
 import jenkins.tasks.SimpleBuildStep;
 
 @Getter
@@ -63,11 +65,12 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
     private String branchURI;
     private String buildVersion;
     private String buildURI;
+    private String reportStatusUrl;
 
     @DataBoundConstructor
     public SoosSCA(String projectName, String mode, String onFailure, String operatingSystem, String resultMaxWait,
                         String resultPollingInterval, String apiBaseURI, String dirsToExclude, String filesToExclude, String commitHash, String branchName,
-                        String branchURI, String buildVersion, String buildURI) {
+                        String branchURI, String buildVersion, String buildURI, String reportStatusUrl) {
 
         this.projectName = projectName;
         this.mode = mode;
@@ -83,6 +86,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         this.branchURI = branchURI;
         this.buildVersion = buildVersion;
         this.buildURI = buildURI;
+        this.reportStatusUrl = reportStatusUrl;
     }
 
     @Override
@@ -98,34 +102,46 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         setEnvProperties(map);
         try {
             SOOS soos = new SOOS();
-            soos.getContext().setScriptVersion(getVersionFromProperties());
-            StructureResponse structure = soos.getStructure();
-            long filesProcessed = soos.sendManifestFiles(structure.getProjectId(), structure.getAnalysisId());
-            StringBuilder fileProcessed = new StringBuilder("File processed: ").append(String.valueOf(filesProcessed));
-            listener.getLogger().println(fileProcessed);
-            LOG.info(fileProcessed.toString());
-
-            if(filesProcessed > 0) {
-                String reportUrl = soos.getStructure().getReportURL();
-                switch (soos.getMode()) {
-                    case RUN_AND_WAIT:
-                        listener.getLogger().println(PluginConstants.RUN_AND_WAIT_MODE_SELECTED);
-                        startAnalysis(soos, structure);
-                        processResult(soos, structure);
-                        listener.hyperlink(reportUrl,PluginConstants.LINK_TEXT);
-                        break;
-                    case ASYNC_INIT:
-                        startAnalysis(soos, structure);
-                        listener.getLogger().println(PluginConstants.ASYNC_INIT_MODE_SELECTED);
-                        break;
-                    case ASYNC_RESULT:
-                        listener.getLogger().println(PluginConstants.ASYNC_RESULT_MODE_SELECTED);
-                        processResult(soos, structure);
-                        listener.hyperlink(reportUrl,PluginConstants.LINK_TEXT);
-                        break;
-                }
+            StructureResponse structure = null;
+            AnalysisResultResponse result = null;
+            LOG.info("--------------------------------------------");
+            switch (soos.getMode()) {
+                case RUN_AND_WAIT:
+                    listener.getLogger().println(PluginConstants.RUN_AND_WAIT_MODE_SELECTED);
+                    LOG.info("Run and Wait Scan");
+                    LOG.info("--------------------------------------------");
+                    structure = soos.startAnalysis();
+                    LOG.info("Analysis request is running");
+                    result = soos.getResults(structure.getReportStatusUrl());
+                    listener.hyperlink(result.getReportUrl(),PluginConstants.LINK_TEXT);
+                    LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getReportUrl());
+                    run.setDisplayName(createCustomDisplayName(run, Mode.RUN_AND_WAIT.getName()));
+                    break;
+                case ASYNC_INIT:
+                    listener.getLogger().println(PluginConstants.ASYNC_INIT_MODE_SELECTED);
+                    LOG.info("Async Init Scan");
+                    LOG.info("--------------------------------------------");
+                    structure = soos.startAnalysis();
+                    this.reportStatusUrl = structure.getReportStatusUrl();
+                    StringBuilder reportStatusText = new StringBuilder("Analysis request is running, access the report status using this link: \n");
+                    reportStatusText.append(structure.getReportStatusUrl());
+                    listener.getLogger().println(reportStatusText);
+                    LOG.info("Analysis request is running, access the report status using this link: {}", structure.getReportStatusUrl());
+                    run.setDisplayName(createCustomDisplayName(run, Mode.ASYNC_INIT.getName()));
+                    break;
+                case ASYNC_RESULT:
+                    listener.getLogger().println(PluginConstants.ASYNC_RESULT_MODE_SELECTED);
+                    LOG.info("Async Result Scan");
+                    LOG.info("--------------------------------------------");
+                    LOG.info("Checking Scan Status from: {}", this.reportStatusUrl);
+                    result = soos.getResults(this.reportStatusUrl);
+                    listener.hyperlink(result.getReportUrl(),PluginConstants.LINK_TEXT);
+                    LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getReportUrl());
+                    run.setDisplayName(createCustomDisplayName(run, Mode.ASYNC_RESULT.getName()));
+                    break;
+                default:
+                    throw new Exception("Invalid SCA Mode");
             }
-
         } catch (Exception e) {
             StringBuilder errorMsg = new StringBuilder("SOOS SCA cannot be done, error: ").append(e);
             if(this.onFailure.equals(PluginConstants.FAIL_THE_BUILD)){
@@ -138,18 +154,21 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
             listener.getLogger().println(errorMsg);
         }
     }
-    private void startAnalysis( SOOS soos, StructureResponse structure ) throws Exception {
-        soos.startAnalysis(structure.getProjectId(), structure.getAnalysisId());
-    }
 
-    private void processResult( SOOS soos, StructureResponse structure ) throws Exception {
-        soos.getResults(structure.getReportStatusUrl());
+    private String createCustomDisplayName (Run<?, ?> run, String mode) throws IOException {
+        StringBuilder displayNameText = new StringBuilder("#");
+        displayNameText.append(run.getNumber());
+        displayNameText.append(" - ");
+        displayNameText.append(mode);
+        displayNameText.append(" ");
+        displayNameText.append("mode.");
+        return displayNameText.toString();
     }
-
 
     @Extension
     public static final class SoosSCADescriptor extends BuildStepDescriptor<Builder> {
 
+        String mode;
         String apiBaseURI;
 
         @Override
@@ -163,7 +182,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         }
 
         public FormValidation doCheckProjectName(@QueryParameter String projectName) {
-
             if( StringUtils.isBlank(projectName) ) {
               return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_NOT_BE_NULL);
             } else if( projectName.length() < PluginConstants.MIN_NUMBER_OF_CHARACTERS ) {
@@ -182,6 +200,14 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
 
             if( !Utils.validateIsNumeric(resultPollingInterval) ) {
               return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_BE_A_NUMBER);
+            }
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckReportStatusUrl(@QueryParameter String mode, @QueryParameter String reportStatusUrl) {
+
+            if( StringUtils.equals(mode, Mode.ASYNC_RESULT.getValue()) && StringUtils.isBlank(reportStatusUrl) ) {
+              return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_NOT_BE_NULL);
             }
             return FormValidation.ok();
         }
@@ -211,7 +237,36 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         public String getDefaultBaseURI() {
             return Constants.SOOS_DEFAULT_API_URL;
         }
+        public ListBoxModel doFillModeItems() {
+            ListBoxModel list = new ListBoxModel();
+            list.add(Mode.RUN_AND_WAIT.getName(), Mode.RUN_AND_WAIT.getValue());
+            list.add(Mode.ASYNC_INIT.getName(), Mode.ASYNC_INIT.getValue());
+            list.add(Mode.ASYNC_RESULT.getName(), Mode.ASYNC_RESULT.getValue());
+            return list;
+        }
 
+        public ListBoxModel doFillOnFailureItems() {
+            ListBoxModel list = new ListBoxModel();
+            list.add(OnFailure.FAIL_THE_BUILD.getName(), OnFailure.FAIL_THE_BUILD.getValue());
+            list.add(OnFailure.CONTINUE_ON_FAILURE.getName(), OnFailure.CONTINUE_ON_FAILURE.getValue());
+            return list;
+        }
+
+        public ListBoxModel doFillOperatingSystemItems() {
+            ListBoxModel list = new ListBoxModel();
+            list.add(OperatingSystem.LINUX.getName(), OperatingSystem.LINUX.getValue());
+            list.add(OperatingSystem.MAC.getName(), OperatingSystem.MAC.getValue());
+            list.add(OperatingSystem.WINDOWS.getName(), OperatingSystem.WINDOWS.getValue());
+            return list;
+        }
+
+        public void doCheckMode(@QueryParameter String mode){
+            this.mode = mode;
+        }
+
+        public Boolean getIsAsyncResult() {
+            return StringUtils.equals(mode, Mode.ASYNC_RESULT.getValue());
+        }
     }
 
     private Map<String, String> populateContext(EnvVars env) {
