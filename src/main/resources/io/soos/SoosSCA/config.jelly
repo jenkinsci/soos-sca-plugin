@@ -1,17 +1,9 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <script type="text/javascript">
-        function showReportStatusURLField(mode) {
-            changeReportStatusURLField(mode);
-        }
-        document.addEventListener('DOMContentLoaded', () => {
-            changeReportStatusURLField(${descriptor.isAsyncResult});
-        });
-        function changeReportStatusURLField(mode) {
-            if ( mode === 'async_result' || ( mode === true &amp;&amp; ${descriptor.isAsyncResult} ) ) {
-                document.getElementById("reportStatusURL").removeAttribute("hidden");
-            } else {
-                document.getElementById("reportStatusURL").setAttribute("hidden","true");
+        function sendModeAndCleanField(mode) {
+            if ( mode !== 'async_result' ) {
+                document.getElementById('reportStatusURL').value = '';
             }
         }
     </script>
@@ -19,13 +11,11 @@
         <f:textbox />
     </f:entry>
     <f:entry title="Mode" field="mode">
-        <f:select onChange="showReportStatusURLField(this.value)" />
+        <f:select onChange="sendModeAndCleanField(this.value)" />
     </f:entry>
-    <div id="reportStatusURL" >
-        <f:entry title="Report Status URL *" field="reportStatusUrl">
-            <f:textbox/>
-        </f:entry>
-    </div>
+    <f:entry title="Report Status URL" field="reportStatusUrl">
+        <f:textbox id="reportStatusURL"/>
+    </f:entry>
     <f:entry title="On Failure" field="onFailure">
         <f:select />
     </f:entry>

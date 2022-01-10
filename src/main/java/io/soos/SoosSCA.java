@@ -13,7 +13,6 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.soos.commons.ErrorMessage;
 import io.soos.commons.PluginConstants;
-import io.soos.commons.Utils;
 import io.soos.domain.Mode;
 import io.soos.domain.OnFailure;
 import io.soos.domain.OperatingSystem;
@@ -122,7 +121,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
                     LOG.info("Async Init Scan");
                     LOG.info("--------------------------------------------");
                     structure = soos.startAnalysis();
-                    this.reportStatusUrl = structure.getReportStatusUrl();
                     StringBuilder reportStatusText = new StringBuilder("Analysis request is running, access the report status using this link: \n");
                     reportStatusText.append(structure.getReportStatusUrl());
                     listener.getLogger().println(reportStatusText);
@@ -168,7 +166,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
     @Extension
     public static final class SoosSCADescriptor extends BuildStepDescriptor<Builder> {
 
-        String mode;
         String apiBaseURI;
 
         @Override
@@ -190,22 +187,19 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
             return FormValidation.ok();
         }
         public FormValidation doCheckResultMaxWait(@QueryParameter String resultMaxWait) {
-
-            if( !Utils.validateIsNumeric(resultMaxWait) ) {
+            if( !StringUtils.isNumeric(resultMaxWait) ) {
               return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_BE_A_NUMBER);
             }
             return FormValidation.ok();
         }
         public FormValidation doCheckResultPollingInterval(@QueryParameter String resultPollingInterval) {
-
-            if( !Utils.validateIsNumeric(resultPollingInterval) ) {
+            if( !StringUtils.isNumeric(resultPollingInterval) ) {
               return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_BE_A_NUMBER);
             }
             return FormValidation.ok();
         }
 
         public FormValidation doCheckReportStatusUrl(@QueryParameter String mode, @QueryParameter String reportStatusUrl) {
-
             if( StringUtils.equals(mode, Mode.ASYNC_RESULT.getValue()) && StringUtils.isBlank(reportStatusUrl) ) {
               return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_NOT_BE_NULL);
             }
@@ -231,12 +225,15 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         public int getDefaultAnalysisResultMaxWait(){
             return Constants.MIN_RECOMMENDED_ANALYSIS_RESULT_MAX_WAIT;
         }
+
         public int getDefaultAnalysisResultPollingInterval(){
             return Constants.MIN_ANALYSIS_RESULT_POLLING_INTERVAL;
         }
+
         public String getDefaultBaseURI() {
             return Constants.SOOS_DEFAULT_API_URL;
         }
+
         public ListBoxModel doFillModeItems() {
             ListBoxModel list = new ListBoxModel();
             list.add(Mode.RUN_AND_WAIT.getName(), Mode.RUN_AND_WAIT.getValue());
@@ -258,14 +255,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
             list.add(OperatingSystem.MAC.getName(), OperatingSystem.MAC.getValue());
             list.add(OperatingSystem.WINDOWS.getName(), OperatingSystem.WINDOWS.getValue());
             return list;
-        }
-
-        public void doCheckMode(@QueryParameter String mode){
-            this.mode = mode;
-        }
-
-        public Boolean getIsAsyncResult() {
-            return StringUtils.equals(mode, Mode.ASYNC_RESULT.getValue());
         }
     }
 
