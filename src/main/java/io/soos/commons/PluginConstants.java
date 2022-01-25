@@ -15,5 +15,21 @@ public interface PluginConstants {
   Integer MIN_NUMBER_OF_CHARACTERS = 5;
   String POM_FILE = "pom.xml";
   String VERSION = "version";
+  String SOOS_ICON_FILE_PATH = "plugin/soos-sca-jenkins/images/soos-icon.png";
+  String SOOS_RESULT_TAB_NAME = "SOOS Result";
+  String SOOS_RESULT_VIEW_URL = "soos-result";
+  String OS_NAME = "os.name";
+  String GIT_BRANCH = "GIT_BRANCH";
+  String GIT_COMMIT = "GIT_COMMIT";
+  String BUILD_URL = "BUILD_URL";
+  String GIT_URL = "GIT_URL";
+  String BUILD_ID = "BUILD_ID";
 
+  String JENKINS_HOME = "JENKINS_HOME";
+  String JOB_BASE_NAME = "JOB_BASE_NAME";
+  String JOBS_DIR = "jobs";
+  String BUILDS_DIR = "builds";
+  String SLASH = "/";
+  String RESULT_URL_FILE = "resultUrl.txt";
+  String BACK_SLASH = "\\";
 }

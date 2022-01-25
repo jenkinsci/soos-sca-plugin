@@ -1,0 +1,26 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    
+    <l:layout title="SOOS Result">
+        <l:side-panel style="display:none;" >
+    		<l:tasks>
+      			<l:task icon="plugin/soos-sca-jenkins/images/up-icon.png" href="${rootURL}/${it.buildUrl}" title="${%Back to Build}" />
+      			<l:task icon="plugin/soos-sca-jenkins/images/previous-icon.png" href="${rootURL}/${it.projectUrl}" title="${%Back to Project}" />
+      		</l:tasks>
+ 		</l:side-panel>
+        <l:main-panel>
+                <div style="margin: auto;
+                            max-width: 50%;
+                            text-align: center;">
+
+                    <a href="http://soos.io"><img class="max-width" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:100% !important; width:100%; height:auto !important;" width="600" alt="SOOS" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/ad9c1fd7de1b8c13/6da70ead-21f6-4c6e-b6fa-572fb3fa647e/1560x415.png"/></a>
+                    <!-- Blue line -->
+                    <div style="margin:20px 0; padding:0 0 6px 0; background-color: #001369"></div>
+
+                    <a href="${it.resultURL}" style="background-color:#FF486A; border:1px solid #FF486A; border-color:#FF486A; border-radius:6px; border-width:1px; color:#ffffff; display:inline-block; font-size:14px; font-weight:normal; letter-spacing:0px; line-height:normal; padding:12px 18px 12px 18px; text-align:center; text-decoration:none; border-style:solid;" target="_blank">View report</a>
+
+                    <a href="http://soos.io"><img class="max-width" style="margin-top:20px; display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:100% !important; width:100%; height:auto !important;" width="600" alt="SOOS" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/ad9c1fd7de1b8c13/d64e5447-95c9-4fad-a923-4da272364360/848x161.png"></img></a>
+                </div>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>

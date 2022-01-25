@@ -1,7 +1,6 @@
 
 package io.soos;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 
@@ -20,6 +19,8 @@ import io.soos.integration.commons.Constants;
 import io.soos.integration.domain.SOOS;
 import io.soos.integration.domain.analysis.AnalysisResultResponse;
 import io.soos.integration.domain.structure.StructureResponse;
+import io.soos.integration.validators.OSValidator;
+import io.soos.web.ResultDisplayAction;
 import jenkins.model.Jenkins;
 import lombok.Getter;
 import lombok.Setter;
@@ -53,7 +54,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
     private String projectName;
     private String mode;
     private String onFailure;
-    private String operatingSystem;
     private String resultMaxWait;
     private String resultPollingInterval;
     private String apiBaseURI;
@@ -64,17 +64,15 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
     private String branchURI;
     private String buildVersion;
     private String buildURI;
-    private String reportStatusUrl;
 
     @DataBoundConstructor
-    public SoosSCA(String projectName, String mode, String onFailure, String operatingSystem, String resultMaxWait,
+    public SoosSCA(String projectName, String mode, String onFailure, String resultMaxWait,
                         String resultPollingInterval, String apiBaseURI, String dirsToExclude, String filesToExclude, String commitHash, String branchName,
-                        String branchURI, String buildVersion, String buildURI, String reportStatusUrl) {
+                        String branchURI, String buildVersion, String buildURI) {
 
         this.projectName = projectName;
         this.mode = mode;
         this.onFailure = onFailure;
-        this.operatingSystem = operatingSystem;
         this.resultMaxWait = resultMaxWait;
         this.resultPollingInterval = resultPollingInterval;
         this.apiBaseURI = apiBaseURI;
@@ -85,24 +83,21 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         this.branchURI = branchURI;
         this.buildVersion = buildVersion;
         this.buildURI = buildURI;
-        this.reportStatusUrl = reportStatusUrl;
     }
 
     @Override
     public void perform(Run<?, ?> run, FilePath workspace, EnvVars env, Launcher launcher, TaskListener listener)
       throws InterruptedException, IOException {
-
-        Map<String, String> map = new HashMap<String,String>();
-
+        Map<String, String> map = new HashMap<>();
         map.putAll(populateContext(env));
-
         map.putAll(getEnvironmentVariables());
-
         setEnvProperties(map);
+        String resultURL = null;
         try {
             SOOS soos = new SOOS();
-            StructureResponse structure = null;
-            AnalysisResultResponse result = null;
+            soos.getContext().setScriptVersion(Utils.getVersionFromProperties());
+            StructureResponse structure;
+            AnalysisResultResponse result;
             LOG.info("--------------------------------------------");
             switch (soos.getMode()) {
                 case RUN_AND_WAIT:
@@ -112,6 +107,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
                     structure = soos.startAnalysis();
                     LOG.info("Analysis request is running");
                     result = soos.getResults(structure.getReportStatusUrl());
+                    resultURL = result.getReportUrl();
                     listener.hyperlink(result.getReportUrl(),PluginConstants.LINK_TEXT);
                     LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getReportUrl());
                     run.setDisplayName(createCustomDisplayName(run, Mode.RUN_AND_WAIT.getName()));
@@ -123,6 +119,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
                     structure = soos.startAnalysis();
                     StringBuilder reportStatusText = new StringBuilder("Analysis request is running, access the report status using this link: \n");
                     reportStatusText.append(structure.getReportStatusUrl());
+                    Utils.saveReportStatusUrl(structure.getReportStatusUrl(), env);
                     listener.getLogger().println(reportStatusText);
                     LOG.info("Analysis request is running, access the report status using this link: {}", structure.getReportStatusUrl());
                     run.setDisplayName(createCustomDisplayName(run, Mode.ASYNC_INIT.getName()));
@@ -131,8 +128,9 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
                     listener.getLogger().println(PluginConstants.ASYNC_RESULT_MODE_SELECTED);
                     LOG.info("Async Result Scan");
                     LOG.info("--------------------------------------------");
-                    LOG.info("Checking Scan Status from: {}", this.reportStatusUrl);
-                    result = soos.getResults(this.reportStatusUrl);
+                    LOG.info("Checking Scan Status from: {}", env.get("SOOS_REPORT_STATUS_URL"));
+                    result = soos.getResults(Utils.getReportStatusUrl(env, run.getPreviousBuild().getNumber()));
+                    resultURL = result.getReportUrl();
                     listener.hyperlink(result.getReportUrl(),PluginConstants.LINK_TEXT);
                     LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getReportUrl());
                     run.setDisplayName(createCustomDisplayName(run, Mode.ASYNC_RESULT.getName()));
@@ -151,6 +149,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
             errorMsg.append(" - Continuing the build... ");
             listener.getLogger().println(errorMsg);
         }
+        run.addAction(new ResultDisplayAction(run, resultURL));
     }
 
     private String createCustomDisplayName (Run<?, ?> run, String mode) throws IOException {
@@ -199,27 +198,8 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
             return FormValidation.ok();
         }
 
-        public FormValidation doCheckReportStatusUrl(@QueryParameter String mode, @QueryParameter String reportStatusUrl) {
-            if( StringUtils.equals(mode, Mode.ASYNC_RESULT.getValue()) && StringUtils.isBlank(reportStatusUrl) ) {
-              return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_NOT_BE_NULL);
-            }
-            return FormValidation.ok();
-        }
-
         public void doCheckApiBaseURI(@QueryParameter String apiBaseURI){
             this.apiBaseURI = apiBaseURI;
-        }
-
-        public Mode[] getModes() {
-          return Mode.values();
-        }
-
-        public OnFailure[] getOptions(){
-          return OnFailure.values();
-        }
-
-        public OperatingSystem[] getOSList(){
-          return OperatingSystem.values();
         }
 
         public int getDefaultAnalysisResultMaxWait(){
@@ -248,19 +228,11 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
             list.add(OnFailure.CONTINUE_ON_FAILURE.getName(), OnFailure.CONTINUE_ON_FAILURE.getValue());
             return list;
         }
-
-        public ListBoxModel doFillOperatingSystemItems() {
-            ListBoxModel list = new ListBoxModel();
-            list.add(OperatingSystem.LINUX.getName(), OperatingSystem.LINUX.getValue());
-            list.add(OperatingSystem.MAC.getName(), OperatingSystem.MAC.getValue());
-            list.add(OperatingSystem.WINDOWS.getName(), OperatingSystem.WINDOWS.getValue());
-            return list;
-        }
     }
 
     private Map<String, String> populateContext(EnvVars env) {
         Map<String, String> map = new HashMap<>();
-
+        String branchName = Utils.getBranchName(env.get(PluginConstants.GIT_BRANCH));
         String dirsToExclude = addSoosDirToExclusion(this.dirsToExclude);
         map.put(Constants.PARAM_PROJECT_NAME_KEY, this.projectName);
         map.put(Constants.PARAM_MODE_KEY, this.mode);
@@ -271,17 +243,16 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         map.put(Constants.PARAM_CHECKOUT_DIR_KEY, env.get(PluginConstants.WORKSPACE));
         map.put(Constants.PARAM_ANALYSIS_RESULT_MAX_WAIT_KEY, this.resultMaxWait);
         map.put(Constants.PARAM_ANALYSIS_RESULT_POLLING_INTERVAL_KEY, this.resultPollingInterval);
-        map.put(Constants.PARAM_OPERATING_ENVIRONMENT_KEY, this.operatingSystem);
+        map.put(Constants.PARAM_OPERATING_ENVIRONMENT_KEY, Utils.getOperatingSystem());
         map.put(Constants.PARAM_API_BASE_URI_KEY, this.apiBaseURI);
-        map.put(Constants.PARAM_BRANCH_NAME_KEY, this.branchName);
-        map.put(Constants.PARAM_BRANCH_URI_KEY, this.branchURI);
-        map.put(Constants.PARAM_COMMIT_HASH_KEY, this.commitHash);
-        map.put(Constants.PARAM_BUILD_VERSION_KEY, this.buildVersion);
-        map.put(Constants.PARAM_BUILD_URI_KEY, this.buildURI);
+        map.put(Constants.PARAM_BRANCH_NAME_KEY, branchName);
+        map.put(Constants.PARAM_BRANCH_URI_KEY, env.get(PluginConstants.GIT_URL));
+        map.put(Constants.PARAM_COMMIT_HASH_KEY, env.get(PluginConstants.GIT_COMMIT));
+        map.put(Constants.PARAM_BUILD_VERSION_KEY, env.get(PluginConstants.BUILD_ID));
+        map.put(Constants.PARAM_BUILD_URI_KEY, env.get(PluginConstants.BUILD_URL));
         map.put(Constants.PARAM_INTEGRATION_NAME_KEY, PluginConstants.INTEGRATION_NAME);
         map.put(PluginConstants.SOOS_CLIENT_ID, env.get(PluginConstants.SOOS_CLIENT_ID));
         map.put(PluginConstants.SOOS_API_KEY, env.get(PluginConstants.SOOS_API_KEY));
-
         if(StringUtils.isBlank(this.resultMaxWait)) {
             map.put(Constants.PARAM_ANALYSIS_RESULT_MAX_WAIT_KEY, String.valueOf(Constants.MIN_RECOMMENDED_ANALYSIS_RESULT_MAX_WAIT));
         }
@@ -291,7 +262,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         if(StringUtils.isBlank(this.apiBaseURI)){
             map.put(Constants.PARAM_API_BASE_URI_KEY, Constants.SOOS_DEFAULT_API_URL);
         }
-
         return map;
     }
 
@@ -316,19 +286,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         DescribableList<NodeProperty<?>, NodePropertyDescriptor> globalNodeProperties = jenkins.getGlobalNodeProperties();
         List<EnvironmentVariablesNodeProperty> envVarsNodePropertyList = globalNodeProperties.getAll(EnvironmentVariablesNodeProperty.class);
         EnvironmentVariablesNodeProperty envVarNodeProperty = envVarsNodePropertyList.get(0);
-
         return new LinkedHashMap<>(envVarNodeProperty.getEnvVars());
-    }
-    private String getVersionFromProperties(){
-        MavenXpp3Reader reader = new MavenXpp3Reader();
-        Model model = null;
-        try {
-            model = reader.read(new FileReader(PluginConstants.POM_FILE));
-            return model.getVersion();
-        } catch (XmlPullParserException | IOException e) {
-            StringBuilder error = new StringBuilder("Cannot read file ").append("'").append(PluginConstants.POM_FILE).append("'");
-            LOG.error(error.toString(), e);
-        }
-        return null;
     }
 }
