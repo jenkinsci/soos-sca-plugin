@@ -1,35 +1,26 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <script type="text/javascript">
+        function sendModeAndCleanField(mode) {
+            if ( mode !== 'async_result' ) {
+                document.getElementById('reportStatusURL').value = '';
+            }
+        }
+    </script>
     <f:entry title="Project Name *" field="projectName">
         <f:textbox />
     </f:entry>
-
     <f:entry title="Mode" field="mode">
-        <j:choose>
-            <select name="mode" class="setting-input">
-                <j:forEach var="mode" items="${descriptor.modes}">
-                    <f:option value="${mode.value}" >${mode.name}</f:option>
-                </j:forEach>
-            </select>
-        </j:choose>
+        <f:select onChange="sendModeAndCleanField(this.value)" />
+    </f:entry>
+    <f:entry title="Report Status URL" field="reportStatusUrl">
+        <f:textbox id="reportStatusURL"/>
     </f:entry>
     <f:entry title="On Failure" field="onFailure">
-        <j:choose>
-            <select name="onFailure" class="setting-input">
-                <j:forEach var="option" items="${descriptor.options}">
-                    <f:option value="${option.value}" >${option.name}</f:option>
-                </j:forEach>
-            </select>
-        </j:choose>
+        <f:select />
     </f:entry>
     <f:entry title="Operating System" field="operatingSystem">
-        <j:choose>
-            <select name="operatingSystem" class="setting-input">
-                <j:forEach var="os" items="${descriptor.oSList}">
-                    <f:option value="${os.value}" >${os.name}</f:option>
-                </j:forEach>
-            </select>
-        </j:choose>
+        <f:select />
     </f:entry>
     <f:entry title="Analysis Result Max Wait" field="resultMaxWait">
         <f:textbox default="${descriptor.defaultAnalysisResultMaxWait}"/>
