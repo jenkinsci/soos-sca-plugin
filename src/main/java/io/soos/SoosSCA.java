@@ -5,12 +5,9 @@ import java.io.IOException;
 import java.util.*;
 
 
-import hudson.slaves.EnvironmentVariablesNodeProperty;
-import hudson.slaves.NodeProperty;
-import hudson.slaves.NodePropertyDescriptor;
-import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.Secret;
 import io.soos.commons.ErrorMessage;
 import io.soos.commons.PluginConstants;
 import io.soos.domain.Mode;
@@ -20,15 +17,16 @@ import io.soos.integration.commons.Constants;
 import io.soos.integration.domain.SOOS;
 import io.soos.integration.domain.analysis.AnalysisResultResponse;
 import io.soos.integration.domain.structure.StructureResponse;
-import jenkins.model.Jenkins;
 import lombok.Getter;
 import lombok.Setter;
+import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +48,8 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
 
     private static final Logger LOG = LoggerFactory.getLogger(SoosSCA.class);
 
+    private Secret SOOSClientId;
+    private Secret SOOSApiKey;
     private String projectName;
     private String mode;
     private String onFailure;
@@ -67,10 +67,11 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
     private String reportStatusUrl;
 
     @DataBoundConstructor
-    public SoosSCA(String projectName, String mode, String onFailure, String operatingSystem, String resultMaxWait,
+    public SoosSCA(Secret SOOSClientId, Secret SOOSApiKey , String projectName, String mode, String onFailure, String operatingSystem, String resultMaxWait,
                         String resultPollingInterval, String apiBaseURI, String dirsToExclude, String filesToExclude, String commitHash, String branchName,
                         String branchURI, String buildVersion, String buildURI, String reportStatusUrl) {
-
+        this.SOOSClientId = SOOSClientId;
+        this.SOOSApiKey = SOOSApiKey;
         this.projectName = projectName;
         this.mode = mode;
         this.onFailure = onFailure;
@@ -92,17 +93,15 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
     public void perform(Run<?, ?> run, FilePath workspace, EnvVars env, Launcher launcher, TaskListener listener)
       throws InterruptedException, IOException {
 
-        Map<String, String> map = new HashMap<String,String>();
+        Map<String, String> map = new HashMap<>();
 
         map.putAll(populateContext(env));
-
-        map.putAll(getEnvironmentVariables());
 
         setEnvProperties(map);
         try {
             SOOS soos = new SOOS();
-            StructureResponse structure = null;
-            AnalysisResultResponse result = null;
+            StructureResponse structure;
+            AnalysisResultResponse result;
             LOG.info("--------------------------------------------");
             switch (soos.getMode()) {
                 case RUN_AND_WAIT:
@@ -165,12 +164,36 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
 
     @Extension
     public static final class SoosSCADescriptor extends BuildStepDescriptor<Builder> {
-
+        private Secret SOOSClientId;
+        private Secret SOOSApiKey;
         String apiBaseURI;
 
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
           return true;
+        }
+
+        public void setSOOSApiKey(Secret SOOSApiKey){
+            this.SOOSApiKey = SOOSApiKey;
+        }
+
+        public Secret getSOOSApiKey(){
+            return SOOSApiKey;
+        }
+
+        public void setSOOSClientId(Secret SOOSClientId){
+            this.SOOSClientId = SOOSClientId;
+        }
+
+        public Secret getSOOSClientId(){
+            return SOOSClientId;
+        }
+
+
+        @Override
+        public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
+            req.bindJSON(this, json);
+            return true;
         }
 
         @Override
@@ -260,8 +283,9 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
 
     private Map<String, String> populateContext(EnvVars env) {
         Map<String, String> map = new HashMap<>();
-
         String dirsToExclude = addSoosDirToExclusion(this.dirsToExclude);
+        map.put(Constants.SOOS_CLIENT_ID, getSOOSClientId().getPlainText());
+        map.put(Constants.SOOS_API_KEY, getSOOSApiKey().getPlainText());
         map.put(Constants.PARAM_PROJECT_NAME_KEY, this.projectName);
         map.put(Constants.PARAM_MODE_KEY, this.mode);
         map.put(Constants.PARAM_ON_FAILURE_KEY, this.onFailure);
@@ -279,8 +303,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         map.put(Constants.PARAM_BUILD_VERSION_KEY, this.buildVersion);
         map.put(Constants.PARAM_BUILD_URI_KEY, this.buildURI);
         map.put(Constants.PARAM_INTEGRATION_NAME_KEY, PluginConstants.INTEGRATION_NAME);
-        map.put(PluginConstants.SOOS_CLIENT_ID, env.get(PluginConstants.SOOS_CLIENT_ID));
-        map.put(PluginConstants.SOOS_API_KEY, env.get(PluginConstants.SOOS_API_KEY));
 
         if(StringUtils.isBlank(this.resultMaxWait)) {
             map.put(Constants.PARAM_ANALYSIS_RESULT_MAX_WAIT_KEY, String.valueOf(Constants.MIN_RECOMMENDED_ANALYSIS_RESULT_MAX_WAIT));
@@ -311,14 +333,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep{
         return PluginConstants.SOOS_DIR_NAME;
     }
 
-    private Map<String, String> getEnvironmentVariables(){
-        Jenkins jenkins = Jenkins.get();
-        DescribableList<NodeProperty<?>, NodePropertyDescriptor> globalNodeProperties = jenkins.getGlobalNodeProperties();
-        List<EnvironmentVariablesNodeProperty> envVarsNodePropertyList = globalNodeProperties.getAll(EnvironmentVariablesNodeProperty.class);
-        EnvironmentVariablesNodeProperty envVarNodeProperty = envVarsNodePropertyList.get(0);
-
-        return new LinkedHashMap<>(envVarNodeProperty.getEnvVars());
-    }
     private String getVersionFromProperties(){
         MavenXpp3Reader reader = new MavenXpp3Reader();
         Model model = null;
