@@ -89,8 +89,7 @@ Set the **Mode** parameter to *Run and wait*, then you can run the plans in your
 Set the **Mode** parameter to *Async init*, if you don't care about the scan result in your CI/CD plan, this is all you have to do!
 
 #### Wait for the Scan
-If you care about the result or want to break the build when issues occur, add a second task close to the end of your plan to give the scan as much time as possible to complete, setting the **Mode** parameter to *Async result*.
-
+If you care about the result or want to break the build when issues occur, set the **Mode** parameter to *Async result*.
 
 ### Configure other plugin parameters
 
@@ -102,22 +101,15 @@ If you care about the result or want to break the build when issues occur, add a
 | --- | --- | --- |
 | Project Name | ""  | REQUIRED. A custom project name that will present itself as a collection of test results within your soos.io dashboard. |
 | Mode | "Run and wait"  | Running mode, alternatives: "Async init" - "Async result" |
+| Directories To Exclude | ""  | List (comma separated) of directories (relative to ./) to exclude from the search for manifest files. Example - Correct: bin/start/ ... Example - Incorrect: ./bin/start/ ... Example - Incorrect: /bin/start/'|
+| Files To Exclude | ""  | List (comma separated) of files (relative to ./) to exclude from the search for manifest files. Example - Correct: bin/start/manifest.txt ... Example - Incorrect: ./bin/start/manifest.txt ... Example - Incorrect: /bin/start/manifest.txt' |
 | On Failure | "Fail the build"  | Stop the building in case of failure, alternative: "Continue on failure" |
-| Operating System | "Linux"  | System info regarding operating system, etc., alternatives: "Mac OS" - "Windows" |
 | Analysis Result Max Wait | 300  | Maximum seconds to wait for Analysis Result before exiting with error. |
 | Analysis Result Polling Interval | 10  | Polling interval (in seconds) for analysis result completion (success/failure.). Min 10. |
 | API Base URL | "https://api.soos.io/api/"  | The API BASE URI provided to you when subscribing to SOOS services. |
-| Directories To Exclude | ""  | List (comma separated) of directories (relative to ./) to exclude from the search for manifest files. Example - Correct: bin/start/ ... Example - Incorrect: ./bin/start/ ... Example - Incorrect: /bin/start/'|
-| Files To Exclude | ""  | List (comma separated) of files (relative to ./) to exclude from the search for manifest files. Example - Correct: bin/start/manifest.txt ... Example - Incorrect: ./bin/start/manifest.txt ... Example - Incorrect: /bin/start/manifest.txt' |
-| Commit Hash | ""  | The commit hash value from the SCM System |
-| Branch Name | ""  | The name of the branch from the SCM System |
-| Branch URI | ""  | The URI to the branch from the SCM System |
-| Build Version | ""  | Version of application build artifacts |
-| Build URI | ""  | URI to CI build info |
 
 </details>
 </blockquote>
-
 
 ## Feedback and Support
 ### Knowledge Base
