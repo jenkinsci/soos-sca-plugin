@@ -1,25 +1,18 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <script type="text/javascript">
-        function sendModeAndCleanField(mode) {
-            if ( mode !== 'async_result' ) {
-                document.getElementById('reportStatusURL').value = '';
-            }
-        }
-    </script>
     <f:entry title="Project Name *" field="projectName">
         <f:textbox />
     </f:entry>
     <f:entry title="Mode" field="mode">
         <f:select onChange="sendModeAndCleanField(this.value)" />
     </f:entry>
-    <f:entry title="Report Status URL" field="reportStatusUrl">
-        <f:textbox id="reportStatusURL"/>
+    <f:entry title="Directories To Exclude" field="dirsToExclude">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Files To Exclude" field="filesToExclude">
+        <f:textbox />
     </f:entry>
     <f:entry title="On Failure" field="onFailure">
-        <f:select />
-    </f:entry>
-    <f:entry title="Operating System" field="operatingSystem">
         <f:select />
     </f:entry>
     <f:entry title="Analysis Result Max Wait" field="resultMaxWait">
@@ -30,26 +23,5 @@
     </f:entry>
     <f:entry title="API Base URL" field="apiBaseURI">
         <f:textbox default="${descriptor.defaultBaseURI}"/>
-    </f:entry>
-    <f:entry title="Directories To Exclude" field="dirsToExclude">
-        <f:textbox />
-    </f:entry>
-    <f:entry title="Files To Exclude" field="filesToExclude">
-        <f:textbox />
-    </f:entry>
-    <f:entry title="Commit Hash" field="commitHash">
-        <f:textbox />
-    </f:entry>
-    <f:entry title="Branch Name" field="branchName">
-        <f:textbox />
-    </f:entry>
-    <f:entry title="Branch URI" field="branchURI">
-        <f:textbox />
-    </f:entry>
-    <f:entry title="Build Version" field="buildVersion">
-        <f:textbox />
-    </f:entry>
-    <f:entry title="Build URI" field="buildURI">
-        <f:textbox />
     </f:entry>
 </j:jelly>
