@@ -12,7 +12,7 @@ import io.soos.domain.OnFailure;
 import io.soos.integration.commons.Constants;
 import io.soos.integration.domain.SOOS;
 import io.soos.integration.domain.analysis.AnalysisResultResponse;
-import io.soos.integration.domain.structure.StructureResponse;
+import io.soos.integration.domain.scan.ScanResponse;
 import io.soos.web.ResultDisplayAction;
 import jenkins.model.Jenkins;
 import lombok.Getter;
@@ -65,6 +65,8 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
     public SoosSCA(Secret SOOSClientId, Secret SOOSApiKey, String projectName, String mode, String onFailure, String resultMaxWait,
                    String resultPollingInterval, String apiBaseURI, String dirsToExclude, String filesToExclude, String commitHash, String branchName,
                    String branchURI, String buildVersion, String buildURI) {
+        this.SOOSClientId = SOOSClientId;
+        this.SOOSApiKey = SOOSApiKey;
         this.projectName = projectName;
         this.mode = mode;
         this.onFailure = onFailure;
@@ -91,7 +93,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
         try {
             SOOS soos = new SOOS();
             soos.getContext().setScriptVersion(Utils.getVersionFromProperties());
-            StructureResponse structure;
+            ScanResponse scan;
             AnalysisResultResponse result;
             LOG.info("--------------------------------------------");
             switch (soos.getMode()) {
@@ -99,24 +101,24 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
                     listener.getLogger().println(PluginConstants.RUN_AND_WAIT_MODE_SELECTED);
                     LOG.info("Run and Wait Scan");
                     LOG.info("--------------------------------------------");
-                    structure = soos.startAnalysis();
+                    scan = soos.startAnalysis();
                     LOG.info("Analysis request is running");
-                    result = soos.getResults(structure.getReportStatusUrl());
-                    resultURL = result.getReportUrl();
-                    listener.hyperlink(result.getReportUrl(), PluginConstants.LINK_TEXT);
-                    LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getReportUrl());
+                    result = soos.getResults(scan.getScanStatusUrl());
+                    resultURL = result.getScanUrl();
+                    listener.hyperlink(result.getScanUrl(), PluginConstants.LINK_TEXT);
+                    LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getScanUrl());
                     run.setDisplayName(createCustomDisplayName(run, Mode.RUN_AND_WAIT.getName()));
                     break;
                 case ASYNC_INIT:
                     listener.getLogger().println(PluginConstants.ASYNC_INIT_MODE_SELECTED);
                     LOG.info("Async Init Scan");
                     LOG.info("--------------------------------------------");
-                    structure = soos.startAnalysis();
+                    scan = soos.startAnalysis();
                     StringBuilder reportStatusText = new StringBuilder("Analysis request is running, access the report status using this link: \n");
-                    reportStatusText.append(structure.getReportStatusUrl());
-                    Utils.saveReportStatusUrl(structure.getReportStatusUrl(), env);
+                    reportStatusText.append(scan.getScanStatusUrl());
+                    Utils.saveReportStatusUrl(scan.getScanStatusUrl(), env);
                     listener.getLogger().println(reportStatusText);
-                    LOG.info("Analysis request is running, access the report status using this link: {}", structure.getReportStatusUrl());
+                    LOG.info("Analysis request is running, access the report status using this link: {}", scan.getScanStatusUrl());
                     run.setDisplayName(createCustomDisplayName(run, Mode.ASYNC_INIT.getName()));
                     break;
                 case ASYNC_RESULT:
@@ -125,9 +127,9 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
                     LOG.info("--------------------------------------------");
                     LOG.info("Checking Scan Status from: {}", env.get("SOOS_REPORT_STATUS_URL"));
                     result = soos.getResults(Utils.getReportStatusUrl(env, run.getPreviousBuild().getNumber()));
-                    resultURL = result.getReportUrl();
-                    listener.hyperlink(result.getReportUrl(), PluginConstants.LINK_TEXT);
-                    LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getReportUrl());
+                    resultURL = result.getScanUrl();
+                    listener.hyperlink(result.getScanUrl(), PluginConstants.LINK_TEXT);
+                    LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getScanUrl());
                     run.setDisplayName(createCustomDisplayName(run, Mode.ASYNC_RESULT.getName()));
                     break;
                 default:
