@@ -1,5 +1,18 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <script type="text/javascript">
+        function sendModeAndCleanField(mode) {
+            if ( mode !== 'async_result' ) {
+                document.getElementById('reportStatusURL').value = '';
+            }
+        }
+    </script>
+    <f:entry title="SOOS Client ID" field="SOOSClientId">
+        <f:password />
+    </f:entry>
+    <f:entry title="SOOS Api Key" field="SOOSApiKey">
+            <f:password />
+    </f:entry>
     <f:entry title="Project Name *" field="projectName">
         <f:textbox />
     </f:entry>
