@@ -8,7 +8,7 @@
         <relativePath />
     </parent>
     <groupId>io.soos</groupId>
-    <artifactId>soos-sca-jenkins</artifactId>
+    <artifactId>soos-sca</artifactId>
     <version>1.0.3</version>
     <packaging>hpi</packaging>
     <properties>
