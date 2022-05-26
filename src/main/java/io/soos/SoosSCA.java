@@ -247,8 +247,8 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
 
         public ListBoxModel doFillOnFailureItems() {
             ListBoxModel list = new ListBoxModel();
-            list.add(OnFailure.FAIL_THE_BUILD.getName(), OnFailure.FAIL_THE_BUILD.getValue());
             list.add(OnFailure.CONTINUE_ON_FAILURE.getName(), OnFailure.CONTINUE_ON_FAILURE.getValue());
+            list.add(OnFailure.FAIL_THE_BUILD.getName(), OnFailure.FAIL_THE_BUILD.getValue());
             return list;
         }
     }
