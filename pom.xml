@@ -79,7 +79,7 @@
             <artifactId>sca</artifactId>
             <scope>system</scope>
             <version>${soos-sca.version}</version>
-            <systemPath>${basedir}\libs\sca-1.0.11.jar</systemPath>
+            <systemPath>${project.basedir}/libs/sca-1.0.11.jar</systemPath>
         </dependency>
         <!-- Logging -->
         <dependency>
