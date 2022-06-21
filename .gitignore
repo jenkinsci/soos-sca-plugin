@@ -25,10 +25,8 @@ target
 .factorypath
 .project
 work
-.mvn
 .idea
 .settings
 .vscode
 .classpath
-.github
 .DS_Store

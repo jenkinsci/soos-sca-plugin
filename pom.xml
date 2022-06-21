@@ -9,14 +9,15 @@
     </parent>
     <groupId>io.soos</groupId>
     <artifactId>soos-sca</artifactId>
-    <version>1.0.4</version>
+    <version>${changelist}</version>
     <packaging>hpi</packaging>
     <properties>
         <enforcer.skip>true</enforcer.skip>
+        <changelist>9999-SNAPSHOT</changelist>
         <jenkins.version>2.277.1</jenkins.version>
         <java.level>8</java.level>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
-        <soos-sca.version>1.0.11</soos-sca.version>
+        <soos-sca.version>1.0.13</soos-sca.version>
         <log4j.version>2.17.1</log4j.version>
     </properties>
     <name>SOOS SCA</name>
