@@ -27,11 +27,18 @@ To use SOOS SCA Plugin you need to:
 
 ## Supported Languages and Package Managers
 
-*	[Node (NPM)](https://www.npmjs.com/)
-*	[Python (pypi)](https://pypi.org/)
-*	[.NET (NuGet)](https://www.nuget.org/)
-*	[Ruby (Ruby Gems)](https://rubygems.org/)
-*	[Java (Maven)](https://maven.apache.org/)
+* Cargo - Rust
+* Composer - PHP
+* Dart PM (Pub Package Manager) - Dart
+* Gradle - Java & Kotlin
+* Homebrew - (various languages)
+* Maven - Java
+* Mix - Elixir
+* NuGet - .NET
+* NPM (Node Package Manager) - Node 
+* PyPI - Python 
+* Rebar3 - Erlang
+* Ruby Gems - Ruby
 
 Our full list of supported manifest formats can be found [here](https://kb.soos.io/help/soos-languages-supported).
 
