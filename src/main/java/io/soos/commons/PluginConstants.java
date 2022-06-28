@@ -16,7 +16,7 @@ public final class PluginConstants {
   public static final Integer MIN_NUMBER_OF_CHARACTERS = 5;
   public static final String POM_FILE = "pom.xml";
   public static final String VERSION = "version";
-  public static final String SOOS_ICON_FILE_PATH = "plugin/soos-sca-jenkins/images/soos-icon.png";
+  public static final String SOOS_ICON_FILE_PATH = "plugin/soos-sca/images/soos-icon.png";
   public static final String SOOS_RESULT_TAB_NAME = "SOOS Result";
   public static final String SOOS_RESULT_VIEW_URL = "soos-result";
   public static final String OS_NAME = "os.name";
