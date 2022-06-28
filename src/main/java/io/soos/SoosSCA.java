@@ -99,13 +99,14 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
             switch (soos.getMode()) {
                 case RUN_AND_WAIT:
                     listener.getLogger().println(PluginConstants.RUN_AND_WAIT_MODE_SELECTED);
-                    LOG.info("Run and Wait Scan");
-                    LOG.info("--------------------------------------------");
+                    listener.getLogger().println("Run and Wait Scan");
+                    listener.getLogger().println("--------------------------------------------");
                     scan = soos.startAnalysis();
-                    LOG.info("Analysis request is running");
+                    listener.getLogger().println("Analysis request is running");
                     result = soos.getResults(scan.getScanStatusUrl());
                     resultURL = result.getScanUrl();
                     listener.hyperlink(result.getScanUrl(), PluginConstants.LINK_TEXT);
+                    listener.getLogger().println("Violations found: " + result.getViolations() + " | Vulnerabilities found: " + result.getVulnerabilities() );
                     LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getScanUrl());
                     run.setDisplayName(createCustomDisplayName(run, Mode.RUN_AND_WAIT.getName()));
                     break;
@@ -123,13 +124,12 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
                     break;
                 case ASYNC_RESULT:
                     listener.getLogger().println(PluginConstants.ASYNC_RESULT_MODE_SELECTED);
-                    LOG.info("Async Result Scan");
-                    LOG.info("--------------------------------------------");
-                    LOG.info("Checking Scan Status from: {}", env.get("SOOS_REPORT_STATUS_URL"));
+                    listener.getLogger().println("Async Result Scan");
+                    listener.getLogger().println("--------------------------------------------");
+                    listener.getLogger().println("Checking Scan Status from: " + env.get("SOOS_REPORT_STATUS_URL"));
                     result = soos.getResults(Utils.getReportStatusUrl(env, run.getPreviousBuild().getNumber()));
                     resultURL = result.getScanUrl();
                     listener.hyperlink(result.getScanUrl(), PluginConstants.LINK_TEXT);
-                    LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getScanUrl());
                     run.setDisplayName(createCustomDisplayName(run, Mode.ASYNC_RESULT.getName()));
                     break;
                 default:
