@@ -60,11 +60,12 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
     private String branchURI;
     private String buildVersion;
     private String buildURI;
+    private String packageManagers;
 
     @DataBoundConstructor
     public SoosSCA(Secret SOOSClientId, Secret SOOSApiKey, String projectName, String mode, String onFailure, String resultMaxWait,
                    String resultPollingInterval, String apiBaseURI, String dirsToExclude, String filesToExclude, String commitHash, String branchName,
-                   String branchURI, String buildVersion, String buildURI) {
+                   String branchURI, String buildVersion, String buildURI, String packageManagers) {
         this.SOOSClientId = SOOSClientId;
         this.SOOSApiKey = SOOSApiKey;
         this.projectName = projectName;
@@ -80,6 +81,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
         this.branchURI = branchURI;
         this.buildVersion = buildVersion;
         this.buildURI = buildURI;
+        this.packageManagers = packageManagers;
     }
 
     @Override
@@ -277,6 +279,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
         map.put(Constants.PARAM_BUILD_VERSION_KEY, env.get(PluginConstants.BUILD_ID));
         map.put(Constants.PARAM_BUILD_URI_KEY, env.get(PluginConstants.BUILD_URL));
         map.put(Constants.PARAM_INTEGRATION_NAME_KEY, PluginConstants.INTEGRATION_NAME);
+        map.put(Constants.PARAM_PACKAGE_MANAGERS_KEY, this.packageManagers);
         if (StringUtils.isBlank(this.resultMaxWait)) {
             map.put(Constants.PARAM_ANALYSIS_RESULT_MAX_WAIT_KEY, String.valueOf(Constants.MIN_RECOMMENDED_ANALYSIS_RESULT_MAX_WAIT));
         }
