@@ -4,8 +4,8 @@
     <l:layout title="SOOS Result">
         <l:side-panel style="display:none;" >
     		<l:tasks>
-      			<l:task icon="plugin/soos-sca-jenkins/images/up-icon.png" href="${rootURL}/${it.buildUrl}" title="${%Back to Build}" />
-      			<l:task icon="plugin/soos-sca-jenkins/images/previous-icon.png" href="${rootURL}/${it.projectUrl}" title="${%Back to Project}" />
+      			<l:task icon="plugin/soos-sca/images/up-icon.png" href="${rootURL}/${it.buildUrl}" title="${%Back to Build}" />
+      			<l:task icon="plugin/soos-sca/images/previous-icon.png" href="${rootURL}/${it.projectUrl}" title="${%Back to Project}" />
       		</l:tasks>
  		</l:side-panel>
         <l:main-panel>

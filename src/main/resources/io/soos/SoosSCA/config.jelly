@@ -25,6 +25,9 @@
     <f:entry title="Files To Exclude" field="filesToExclude">
         <f:textbox />
     </f:entry>
+    <f:entry title="Package Manager to look for" field="packageManagers">
+        <f:textbox />
+    </f:entry>
     <f:entry title="On Failure" field="onFailure">
         <f:select />
     </f:entry>
