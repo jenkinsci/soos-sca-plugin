@@ -27,11 +27,18 @@ To use SOOS SCA Plugin you need to:
 
 ## Supported Languages and Package Managers
 
-*	[Node (NPM)](https://www.npmjs.com/)
-*	[Python (pypi)](https://pypi.org/)
-*	[.NET (NuGet)](https://www.nuget.org/)
-*	[Ruby (Ruby Gems)](https://rubygems.org/)
-*	[Java (Maven)](https://maven.apache.org/)
+* Cargo - Rust
+* Composer - PHP
+* Dart PM (Pub Package Manager) - Dart
+* Gradle - Java & Kotlin
+* Homebrew - (various languages)
+* Maven - Java
+* Mix - Elixir
+* NuGet - .NET
+* NPM (Node Package Manager) - Node 
+* PyPI - Python 
+* Rebar3 - Erlang
+* Ruby Gems - Ruby
 
 Our full list of supported manifest formats can be found [here](https://kb.soos.io/help/soos-languages-supported).
 
@@ -97,16 +104,17 @@ If you care about the result or want to break the build when issues occur, set t
 <details>
 <summary> Show parameters </summary>
 
-| Select/Inputs | Default | Description |
-| --- | --- | --- |
-| Project Name | ""  | REQUIRED. A custom project name that will present itself as a collection of test results within your soos.io dashboard. |
-| Mode | "Run and wait"  | Running mode, alternatives: "Async init" - "Async result" |
-| Directories To Exclude | ""  | List (comma separated) of directories (relative to ./) to exclude from the search for manifest files. Example - Correct: bin/start/ ... Example - Incorrect: ./bin/start/ ... Example - Incorrect: /bin/start/'|
-| Files To Exclude | ""  | List (comma separated) of files (relative to ./) to exclude from the search for manifest files. Example - Correct: bin/start/manifest.txt ... Example - Incorrect: ./bin/start/manifest.txt ... Example - Incorrect: /bin/start/manifest.txt' |
-| On Failure | "Fail the build"  | Stop the building in case of failure, alternative: "Continue on failure" |
-| Analysis Result Max Wait | 300  | Maximum seconds to wait for Analysis Result before exiting with error. |
-| Analysis Result Polling Interval | 10  | Polling interval (in seconds) for analysis result completion (success/failure.). Min 10. |
-| API Base URL | "https://api.soos.io/api/"  | The API BASE URI provided to you when subscribing to SOOS services. |
+| Select/Inputs                    | Default | Description                                                                                                                                                                                                                                   |
+|----------------------------------| --- |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Project Name                     | ""  | REQUIRED. A custom project name that will present itself as a collection of test results within your soos.io dashboard.                                                                                                                       |
+| Mode                             | "Run and wait"  | Running mode, alternatives: "Async init" - "Async result"                                                                                                                                                                                     |
+| Directories To Exclude           | ""  | List (comma separated) of directories (relative to ./) to exclude from the search for manifest files. Example - Correct: bin/start/ ... Example - Incorrect: ./bin/start/ ... Example - Incorrect: /bin/start/'                               |
+| Files To Exclude                 | ""  | List (comma separated) of files (relative to ./) to exclude from the search for manifest files. Example - Correct: bin/start/manifest.txt ... Example - Incorrect: ./bin/start/manifest.txt ... Example - Incorrect: /bin/start/manifest.txt' |
+| On Failure                       | "Fail the build"  | Stop the building in case of failure, alternative: "Continue on failure"                                                                                                                                                                      |
+| Analysis Result Max Wait         | 300  | Maximum seconds to wait for Analysis Result before exiting with error.                                                                                                                                                                        |
+| Analysis Result Polling Interval | 10  | Polling interval (in seconds) for analysis result completion (success/failure.). Min 10.                                                                                                                                                      |
+| API Base URL                     | "https://api.soos.io/api/"  | The API BASE URI provided to you when subscribing to SOOS services.                                                                                                                                                                           |
+| Package Manager                  | ""  | Comma separated list of names of Package Managers to filter manifest search.                                                                                                                                                                  |
 
 </details>
 </blockquote>

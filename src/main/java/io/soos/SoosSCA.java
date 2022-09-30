@@ -60,11 +60,12 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
     private String branchURI;
     private String buildVersion;
     private String buildURI;
+    private String packageManagers;
 
     @DataBoundConstructor
     public SoosSCA(Secret SOOSClientId, Secret SOOSApiKey, String projectName, String mode, String onFailure, String resultMaxWait,
                    String resultPollingInterval, String apiBaseURI, String dirsToExclude, String filesToExclude, String commitHash, String branchName,
-                   String branchURI, String buildVersion, String buildURI) {
+                   String branchURI, String buildVersion, String buildURI, String packageManagers) {
         this.SOOSClientId = SOOSClientId;
         this.SOOSApiKey = SOOSApiKey;
         this.projectName = projectName;
@@ -80,6 +81,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
         this.branchURI = branchURI;
         this.buildVersion = buildVersion;
         this.buildURI = buildURI;
+        this.packageManagers = packageManagers;
     }
 
     @Override
@@ -99,13 +101,14 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
             switch (soos.getMode()) {
                 case RUN_AND_WAIT:
                     listener.getLogger().println(PluginConstants.RUN_AND_WAIT_MODE_SELECTED);
-                    LOG.info("Run and Wait Scan");
-                    LOG.info("--------------------------------------------");
+                    listener.getLogger().println("Run and Wait Scan");
+                    listener.getLogger().println("--------------------------------------------");
                     scan = soos.startAnalysis();
-                    LOG.info("Analysis request is running");
+                    listener.getLogger().println("Analysis request is running");
                     result = soos.getResults(scan.getScanStatusUrl());
                     resultURL = result.getScanUrl();
                     listener.hyperlink(result.getScanUrl(), PluginConstants.LINK_TEXT);
+                    listener.getLogger().println("Violations found: " + result.getViolations() + " | Vulnerabilities found: " + result.getVulnerabilities() );
                     LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getScanUrl());
                     run.setDisplayName(createCustomDisplayName(run, Mode.RUN_AND_WAIT.getName()));
                     break;
@@ -123,13 +126,12 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
                     break;
                 case ASYNC_RESULT:
                     listener.getLogger().println(PluginConstants.ASYNC_RESULT_MODE_SELECTED);
-                    LOG.info("Async Result Scan");
-                    LOG.info("--------------------------------------------");
-                    LOG.info("Checking Scan Status from: {}", env.get("SOOS_REPORT_STATUS_URL"));
+                    listener.getLogger().println("Async Result Scan");
+                    listener.getLogger().println("--------------------------------------------");
+                    listener.getLogger().println("Checking Scan Status from: " + env.get("SOOS_REPORT_STATUS_URL"));
                     result = soos.getResults(Utils.getReportStatusUrl(env, run.getPreviousBuild().getNumber()));
                     resultURL = result.getScanUrl();
                     listener.hyperlink(result.getScanUrl(), PluginConstants.LINK_TEXT);
-                    LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getScanUrl());
                     run.setDisplayName(createCustomDisplayName(run, Mode.ASYNC_RESULT.getName()));
                     break;
                 default:
@@ -277,6 +279,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
         map.put(Constants.PARAM_BUILD_VERSION_KEY, env.get(PluginConstants.BUILD_ID));
         map.put(Constants.PARAM_BUILD_URI_KEY, env.get(PluginConstants.BUILD_URL));
         map.put(Constants.PARAM_INTEGRATION_NAME_KEY, PluginConstants.INTEGRATION_NAME);
+        map.put(Constants.PARAM_PACKAGE_MANAGERS_KEY, this.packageManagers);
         if (StringUtils.isBlank(this.resultMaxWait)) {
             map.put(Constants.PARAM_ANALYSIS_RESULT_MAX_WAIT_KEY, String.valueOf(Constants.MIN_RECOMMENDED_ANALYSIS_RESULT_MAX_WAIT));
         }
@@ -291,9 +294,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
 
     private void setEnvProperties(Map<String, String> map) {
         map.forEach((key, value) -> {
-            if (StringUtils.isNotBlank(value)) {
                 System.setProperty(key, value);
-            }
         });
     }
 

@@ -4,8 +4,8 @@
     <l:layout title="SOOS Result">
         <l:side-panel style="display:none;" >
     		<l:tasks>
-      			<l:task icon="plugin/soos-sca-jenkins/images/up-icon.png" href="${rootURL}/${it.buildUrl}" title="${%Back to Build}" />
-      			<l:task icon="plugin/soos-sca-jenkins/images/previous-icon.png" href="${rootURL}/${it.projectUrl}" title="${%Back to Project}" />
+      			<l:task icon="plugin/soos-sca/images/up-icon.png" href="${rootURL}/${it.buildUrl}" title="${%Back to Build}" />
+      			<l:task icon="plugin/soos-sca/images/previous-icon.png" href="${rootURL}/${it.projectUrl}" title="${%Back to Project}" />
       		</l:tasks>
  		</l:side-panel>
         <l:main-panel>
@@ -13,7 +13,7 @@
                             max-width: 50%;
                             text-align: center;">
 
-                    <a href="http://soos.io"><img class="max-width" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:100% !important; width:100%; height:auto !important;" width="600" alt="SOOS" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/ad9c1fd7de1b8c13/6da70ead-21f6-4c6e-b6fa-572fb3fa647e/1560x415.png"/></a>
+                    <a href="http://soos.io"><img class="max-width" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:100% !important; width:100%; height:auto !important;" width="600" alt="SOOS" data-proportionally-constrained="true" data-responsive="true" src="https://soos.io/wp-content/themes/soos2021/dist/img/logos/SOOSLogo.png"/></a>
                     <!-- Blue line -->
                     <div style="margin:20px 0; padding:0 0 6px 0; background-color: #001369"></div>
 
