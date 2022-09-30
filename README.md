@@ -12,7 +12,7 @@ SOOS is the affordable, easy-to-integrate Software Composition Analysis solution
 - Detect and prevent dependency substitutions and typo-squatting
 - Generate SBOMs
 - Fill out your compliance worksheets with confidence
-- Simple and affordable pricing. Only one plan that includes every feature we offer plus unlimited projects, unlimited users, and no scan limits.
+- Simple and affordable pricing. Only one plan that includes every feature we offer up to 100 projects, unlimited users, and no scan limits.
 
 ## How to Use
 
