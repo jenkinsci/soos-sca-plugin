@@ -17,7 +17,7 @@
         <jenkins.version>2.277.1</jenkins.version>
         <java.level>8</java.level>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
-        <soos-sca.version>1.0.18</soos-sca.version>
+        <soos-sca.version>1.0.19</soos-sca.version>
         <log4j.version>2.17.1</log4j.version>
     </properties>
     <name>SOOS SCA</name>
