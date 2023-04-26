@@ -7,7 +7,6 @@ import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import io.soos.commons.ErrorMessage;
 import io.soos.commons.PluginConstants;
-import io.soos.domain.Mode;
 import io.soos.domain.OnFailure;
 import io.soos.integration.commons.Constants;
 import io.soos.integration.domain.SOOS;
@@ -48,7 +47,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
     private Secret SOOSClientId;
     private Secret SOOSApiKey;
     private String projectName;
-    private String mode;
     private String onFailure;
     private String resultMaxWait;
     private String resultPollingInterval;
@@ -63,13 +61,12 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
     private String packageManagers;
 
     @DataBoundConstructor
-    public SoosSCA(Secret SOOSClientId, Secret SOOSApiKey, String projectName, String mode, String onFailure, String resultMaxWait,
+    public SoosSCA(Secret SOOSClientId, Secret SOOSApiKey, String projectName, String onFailure, String resultMaxWait,
                    String resultPollingInterval, String apiBaseURI, String dirsToExclude, String filesToExclude, String commitHash, String branchName,
                    String branchURI, String buildVersion, String buildURI, String packageManagers) {
         this.SOOSClientId = SOOSClientId;
         this.SOOSApiKey = SOOSApiKey;
         this.projectName = projectName;
-        this.mode = mode;
         this.onFailure = onFailure;
         this.resultMaxWait = resultMaxWait;
         this.resultPollingInterval = resultPollingInterval;
@@ -98,45 +95,16 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
             ScanResponse scan;
             AnalysisResultResponse result;
             LOG.info("--------------------------------------------");
-            switch (soos.getMode()) {
-                case RUN_AND_WAIT:
-                    listener.getLogger().println(PluginConstants.RUN_AND_WAIT_MODE_SELECTED);
-                    listener.getLogger().println("Run and Wait Scan");
-                    listener.getLogger().println("--------------------------------------------");
-                    scan = soos.startAnalysis();
-                    listener.getLogger().println("Analysis request is running");
-                    result = soos.getResults(scan.getScanStatusUrl());
-                    resultURL = result.getScanUrl();
-                    listener.hyperlink(result.getScanUrl(), PluginConstants.LINK_TEXT);
-                    listener.getLogger().println("Violations found: " + result.getViolations() + " | Vulnerabilities found: " + result.getVulnerabilities() );
-                    LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getScanUrl());
-                    run.setDisplayName(createCustomDisplayName(run, Mode.RUN_AND_WAIT.getName()));
-                    break;
-                case ASYNC_INIT:
-                    listener.getLogger().println(PluginConstants.ASYNC_INIT_MODE_SELECTED);
-                    LOG.info("Async Init Scan");
-                    LOG.info("--------------------------------------------");
-                    scan = soos.startAnalysis();
-                    StringBuilder reportStatusText = new StringBuilder("Analysis request is running, access the report status using this link: \n");
-                    reportStatusText.append(scan.getScanStatusUrl());
-                    Utils.saveReportStatusUrl(scan.getScanStatusUrl(), env);
-                    listener.getLogger().println(reportStatusText);
-                    LOG.info("Analysis request is running, access the report status using this link: {}", scan.getScanStatusUrl());
-                    run.setDisplayName(createCustomDisplayName(run, Mode.ASYNC_INIT.getName()));
-                    break;
-                case ASYNC_RESULT:
-                    listener.getLogger().println(PluginConstants.ASYNC_RESULT_MODE_SELECTED);
-                    listener.getLogger().println("Async Result Scan");
-                    listener.getLogger().println("--------------------------------------------");
-                    listener.getLogger().println("Checking Scan Status from: " + env.get("SOOS_REPORT_STATUS_URL"));
-                    result = soos.getResults(Utils.getReportStatusUrl(env, run.getPreviousBuild().getNumber()));
-                    resultURL = result.getScanUrl();
-                    listener.hyperlink(result.getScanUrl(), PluginConstants.LINK_TEXT);
-                    run.setDisplayName(createCustomDisplayName(run, Mode.ASYNC_RESULT.getName()));
-                    break;
-                default:
-                    throw new Exception("Invalid SCA Mode");
-            }
+            listener.getLogger().println("SOOS SCA Scan");
+            listener.getLogger().println("--------------------------------------------");
+            scan = soos.startAnalysis();
+            listener.getLogger().println("Analysis request is running");
+            result = soos.getResults(scan.getScanStatusUrl());
+            resultURL = result.getScanUrl();
+            listener.hyperlink(result.getScanUrl(), PluginConstants.LINK_TEXT);
+            listener.getLogger().println("Violations found: " + result.getViolations() + " | Vulnerabilities found: " + result.getVulnerabilities() );
+            LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getScanUrl());
+
         } catch (Exception e) {
             StringBuilder errorMsg = new StringBuilder("SOOS SCA cannot be done, error: ").append(e);
             if (this.onFailure.equals(PluginConstants.FAIL_THE_BUILD)) {
@@ -155,9 +123,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
         StringBuilder displayNameText = new StringBuilder("#");
         displayNameText.append(run.getNumber());
         displayNameText.append(" - ");
-        displayNameText.append(mode);
         displayNameText.append(" ");
-        displayNameText.append("mode.");
         return displayNameText.toString();
     }
 
@@ -239,13 +205,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
             return Constants.SOOS_DEFAULT_API_URL;
         }
 
-        public ListBoxModel doFillModeItems() {
-            ListBoxModel list = new ListBoxModel();
-            list.add(Mode.RUN_AND_WAIT.getName(), Mode.RUN_AND_WAIT.getValue());
-            list.add(Mode.ASYNC_INIT.getName(), Mode.ASYNC_INIT.getValue());
-            list.add(Mode.ASYNC_RESULT.getName(), Mode.ASYNC_RESULT.getValue());
-            return list;
-        }
 
         public ListBoxModel doFillOnFailureItems() {
             ListBoxModel list = new ListBoxModel();
@@ -263,7 +222,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
         map.put(Constants.SOOS_CLIENT_ID, getSOOSClientId().getPlainText());
         map.put(Constants.SOOS_API_KEY, getSOOSApiKey().getPlainText());
         map.put(Constants.PARAM_PROJECT_NAME_KEY, this.projectName);
-        map.put(Constants.PARAM_MODE_KEY, this.mode);
         map.put(Constants.PARAM_ON_FAILURE_KEY, this.onFailure);
         map.put(Constants.PARAM_DIRS_TO_EXCLUDE_KEY, dirsToExclude);
         map.put(Constants.PARAM_FILES_TO_EXCLUDE_KEY, this.filesToExclude);
