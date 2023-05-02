@@ -10,9 +10,6 @@ public final class PluginConstants {
   public static final String SOOS_API_KEY = "SOOS_API_KEY";
   public static final String DISPLAY_NAME = "SOOS SCA";
   public static final String LINK_TEXT = "Go to the report.\n";
-  public static final String RUN_AND_WAIT_MODE_SELECTED = "run_and_wait mode selected, starting synchronous analysis...";
-  public static final String ASYNC_INIT_MODE_SELECTED = "async_init mode selected, starting asynchronous analysis...";
-  public static final String ASYNC_RESULT_MODE_SELECTED = "async_result mode selected, getting result from previous analysis...";
   public static final Integer MIN_NUMBER_OF_CHARACTERS = 5;
   public static final String POM_FILE = "pom.xml";
   public static final String VERSION = "version";
