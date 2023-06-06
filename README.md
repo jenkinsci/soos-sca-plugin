@@ -4,15 +4,11 @@
 
 SOOS is the affordable, easy-to-integrate Software Composition Analysis solution for your whole team.
 
-## Features
-- Scan your Open Source Software, Webapps and Containers for vulnerabilities
-- Ease of integration (run your first scan in minutes or get your first scan results within minutes)
-- Control the introduction of new dependencies and vulnerabilities
-- Exclude unwanted license-types
-- Detect and prevent dependency substitutions and typo-squatting
-- Generate SBOMs
-- Fill out your compliance worksheets with confidence
-- Simple and affordable pricing. Only one plan that includes every feature we offer up to 100 projects, unlimited users, and no scan limits.
+Use SOOS to scan your software for [vulnerabilities](https://app.soos.io/research/vulnerabilities) and [open source license](https://app.soos.io/research/licenses) issues with [SOOS Core SCA](https://soos.io/sca-product). [Generate SBOMs](https://kb.soos.io/help/soos-reports-for-export). Govern your open source dependencies. Run the [SOOS DAST vulnerability scanner](https://soos.io/dast-product) against your web apps or APIs.
+
+[Demo SOOS](https://app.soos.io/demo) or [Register for a Free Trial](https://app.soos.io/register).
+
+If you maintain an Open Source project, sign up for the Free as in Beer [SOOS Community Edition](https://soos.io/products/community-edition).
 
 ## How to Use
 
