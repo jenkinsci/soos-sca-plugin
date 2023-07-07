@@ -22,6 +22,7 @@ To use SOOS SCA Plugin you need to:
 
 ## Supported Languages and Package Managers
 
+* C++ - Conan
 * Cargo - Rust
 * Composer - PHP
 * Dart PM (Pub Package Manager) - Dart
