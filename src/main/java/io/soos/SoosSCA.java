@@ -11,13 +11,10 @@ import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import io.soos.commons.ErrorMessage;
 import io.soos.commons.PluginConstants;
-import io.soos.domain.OnFailure;
-import io.soos.integration.commons.Constants;
-import io.soos.integration.domain.SOOS;
-import io.soos.integration.domain.analysis.AnalysisResultResponse;
-import io.soos.integration.domain.scan.ScanResponse;
+import io.soos.integration.Configuration;
+import io.soos.integration.Enums;
+import io.soos.integration.SoosScaWrapper;
 import io.soos.web.ResultDisplayAction;
-import jenkins.model.Jenkins;
 import lombok.Getter;
 import lombok.Setter;
 import net.sf.json.JSONObject;
@@ -25,8 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -44,66 +40,86 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
 
     private static final Logger LOG = LoggerFactory.getLogger(SoosSCA.class);
 
-    private Secret SOOSClientId;
     private Secret SOOSApiKey;
-    private String projectName;
-    private String onFailure;
-    private String resultMaxWait;
-    private String resultPollingInterval;
+    private Secret SOOSClientId;
     private String apiBaseURI;
-    private String dirsToExclude;
-    private String filesToExclude;
-    private String commitHash;
     private String branchName;
     private String branchURI;
-    private String buildVersion;
     private String buildURI;
+    private String buildVersion;
+    private String commitHash;
+    private String dirsToExclude;
+    private String filesToExclude;
+    private String logLevel;
+    private String nodePath;
+    private String onFailure;
+    private String outputFormat;
     private String packageManagers;
+    private String projectName;
+    private Boolean verbose;
 
     @DataBoundConstructor
-    public SoosSCA(Secret SOOSClientId, Secret SOOSApiKey, String projectName, String onFailure, String resultMaxWait,
-                   String resultPollingInterval, String apiBaseURI, String dirsToExclude, String filesToExclude, String commitHash, String branchName,
-                   String branchURI, String buildVersion, String buildURI, String packageManagers) {
-        this.SOOSClientId = SOOSClientId;
+    public SoosSCA(Secret SOOSApiKey, Secret SOOSClientId, String apiBaseURI, String branchName,
+                   String branchURI, String buildURI, String buildVersion, String commitHash,
+                   String dirsToExclude, String filesToExclude, String logLevel, String nodePath,
+                   String onFailure, String outputFormat, String packageManagers, String projectName,
+                   Boolean verbose) {
+
         this.SOOSApiKey = SOOSApiKey;
-        this.projectName = projectName;
-        this.onFailure = onFailure;
-        this.resultMaxWait = resultMaxWait;
-        this.resultPollingInterval = resultPollingInterval;
+        this.SOOSClientId = SOOSClientId;
         this.apiBaseURI = apiBaseURI;
-        this.dirsToExclude = dirsToExclude;
-        this.filesToExclude = filesToExclude;
-        this.commitHash = commitHash;
         this.branchName = branchName;
         this.branchURI = branchURI;
-        this.buildVersion = buildVersion;
         this.buildURI = buildURI;
+        this.buildVersion = buildVersion;
+        this.commitHash = commitHash;
+        this.dirsToExclude = dirsToExclude;
+        this.filesToExclude = filesToExclude;
+        this.logLevel = logLevel;
+        this.nodePath = nodePath;
+        this.onFailure = onFailure;
+        this.outputFormat = outputFormat;
         this.packageManagers = packageManagers;
+        this.projectName = projectName;
+        this.verbose = verbose;
     }
 
     @Override
     public void perform(Run<?, ?> run, FilePath workspace, EnvVars env, Launcher launcher, TaskListener listener)
             throws InterruptedException, IOException {
-
         Map<String, String> map = new HashMap<>();
-        map.putAll(populateContext(env, run));
-        setEnvProperties(map);
+
         String resultURL = null;
+
         try {
-            SOOS soos = new SOOS();
-            soos.getContext().setScriptVersion(Utils.getVersionFromProperties());
-            ScanResponse scan;
-            AnalysisResultResponse result;
-            LOG.info("--------------------------------------------");
-            listener.getLogger().println("SOOS SCA Scan");
-            listener.getLogger().println("--------------------------------------------");
-            scan = soos.startAnalysis();
-            listener.getLogger().println("Analysis request is running");
-            result = soos.getResults(scan.getScanStatusUrl());
-            resultURL = result.getScanUrl();
-            listener.hyperlink(result.getScanUrl(), PluginConstants.LINK_TEXT);
-            listener.getLogger().println("Violations found: " + result.getViolations() + " | Vulnerabilities found: " + result.getVulnerabilities() );
-            LOG.info("Scan analysis finished successfully. To see the results go to: {}", result.getScanUrl());
+            Configuration configuration = new Configuration();
+            configuration.setApiKey(SOOSApiKey.getPlainText());
+            configuration.setApiURL(apiBaseURI);
+            configuration.setBranchName(branchName);
+            configuration.setBranchURI(branchURI);
+            configuration.setBuildURI(buildURI);
+            configuration.setBuildVersion(buildVersion);
+            configuration.setClientId(SOOSClientId.getPlainText());
+            configuration.setCommitHash(commitHash);
+            configuration.setDirectoriesToExclude(dirsToExclude);
+            configuration.setFilesToExclude(filesToExclude);
+            configuration.setIntegrationName(PluginConstants.INTEGRATION_NAME);
+            configuration.setLogLevel(logLevel);
+            configuration.setNodePath(nodePath);
+            configuration.setOnFailure(onFailure);
+            configuration.setOutputFormat(outputFormat);
+            configuration.setPackageManagers(packageManagers);
+            configuration.setProjectName(projectName);
+            configuration.setVerbose(verbose);
+
+            final String user = getChangeUser(run);
+            if(user != null && !user.isEmpty()) {
+                configuration.setContributingDeveloperId(user);
+                configuration.setContributingDeveloperSource("JENKINS_ENTRY_USER");
+            }
+
+            SoosScaWrapper soosScaWrapper = new SoosScaWrapper(configuration, listener.getLogger());
+            soosScaWrapper.runSca();
 
         } catch (Exception e) {
             StringBuilder errorMsg = new StringBuilder("SOOS SCA cannot be done, error: ").append(e);
@@ -175,13 +191,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
             return FormValidation.ok();
         }
 
-        public FormValidation doCheckResultMaxWait(@QueryParameter String resultMaxWait) {
-            if (!StringUtils.isNumeric(resultMaxWait)) {
-                return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_BE_A_NUMBER);
-            }
-            return FormValidation.ok();
-        }
-
         public FormValidation doCheckResultPollingInterval(@QueryParameter String resultPollingInterval) {
             if (!StringUtils.isNumeric(resultPollingInterval)) {
                 return FormValidation.errorWithMarkup(ErrorMessage.SHOULD_BE_A_NUMBER);
@@ -193,81 +202,24 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
             this.apiBaseURI = apiBaseURI;
         }
 
-        public int getDefaultAnalysisResultMaxWait() {
-            return Constants.MIN_RECOMMENDED_ANALYSIS_RESULT_MAX_WAIT;
-        }
-
-        public int getDefaultAnalysisResultPollingInterval() {
-            return Constants.MIN_ANALYSIS_RESULT_POLLING_INTERVAL;
-        }
-
-        public String getDefaultBaseURI() {
-            return Constants.SOOS_DEFAULT_API_URL;
-        }
-
 
         public ListBoxModel doFillOnFailureItems() {
             ListBoxModel list = new ListBoxModel();
-            list.add(OnFailure.CONTINUE_ON_FAILURE.getName(), OnFailure.CONTINUE_ON_FAILURE.getValue());
-            list.add(OnFailure.FAIL_THE_BUILD.getName(), OnFailure.FAIL_THE_BUILD.getValue());
+            for (Enums.OnFailure onFailure : Enums.OnFailure.values()) {
+                list.add(onFailure.name(), onFailure.name());
+            }
             return list;
         }
-    }
 
-    private Map<String, String> populateContext(EnvVars env, Run<?, ?> run) throws AbortException {
-        Map<String, String> map = new HashMap<>();
+        public ListBoxModel doFillLogLevelItems() {
+            ListBoxModel list = new ListBoxModel();
+            for (Enums.LogLevel logLevel : Enums.LogLevel.values()) {
+                list.add(logLevel.name(), logLevel.name());
+            }
 
-        String branchName = Utils.getBranchName(env.get(PluginConstants.GIT_BRANCH));
-        String dirsToExclude = addSoosDirToExclusion(this.dirsToExclude);
-        map.put(Constants.SOOS_CLIENT_ID, getSOOSClientId().getPlainText());
-        map.put(Constants.SOOS_API_KEY, getSOOSApiKey().getPlainText());
-        map.put(Constants.PARAM_PROJECT_NAME_KEY, this.projectName);
-        map.put(Constants.PARAM_ON_FAILURE_KEY, this.onFailure);
-        map.put(Constants.PARAM_DIRS_TO_EXCLUDE_KEY, dirsToExclude);
-        map.put(Constants.PARAM_FILES_TO_EXCLUDE_KEY, this.filesToExclude);
-        map.put(Constants.PARAM_WORKSPACE_DIR_KEY, env.get(PluginConstants.WORKSPACE));
-        map.put(Constants.PARAM_CHECKOUT_DIR_KEY, env.get(PluginConstants.WORKSPACE));
-        map.put(Constants.PARAM_ANALYSIS_RESULT_MAX_WAIT_KEY, this.resultMaxWait);
-        map.put(Constants.PARAM_ANALYSIS_RESULT_POLLING_INTERVAL_KEY, this.resultPollingInterval);
-        map.put(Constants.PARAM_OPERATING_ENVIRONMENT_KEY, Utils.getOperatingSystem());
-        map.put(Constants.PARAM_API_BASE_URI_KEY, this.apiBaseURI);
-        map.put(Constants.PARAM_BRANCH_NAME_KEY, branchName);
-        map.put(Constants.PARAM_BRANCH_URI_KEY, env.get(PluginConstants.GIT_URL));
-        map.put(Constants.PARAM_COMMIT_HASH_KEY, env.get(PluginConstants.GIT_COMMIT));
-        map.put(Constants.PARAM_BUILD_VERSION_KEY, env.get(PluginConstants.BUILD_ID));
-        map.put(Constants.PARAM_BUILD_URI_KEY, env.get(PluginConstants.BUILD_URL));
-        map.put(Constants.PARAM_INTEGRATION_NAME_KEY, PluginConstants.INTEGRATION_NAME);
-        map.put(Constants.PARAM_PACKAGE_MANAGERS_KEY, this.packageManagers);
-        if (StringUtils.isBlank(this.resultMaxWait)) {
-            map.put(Constants.PARAM_ANALYSIS_RESULT_MAX_WAIT_KEY, String.valueOf(Constants.MIN_RECOMMENDED_ANALYSIS_RESULT_MAX_WAIT));
-        }
-        if (StringUtils.isBlank(this.resultPollingInterval)) {
-            map.put(Constants.PARAM_ANALYSIS_RESULT_POLLING_INTERVAL_KEY, String.valueOf(Constants.MIN_ANALYSIS_RESULT_POLLING_INTERVAL));
-        }
-        if (StringUtils.isBlank(this.apiBaseURI)) {
-            map.put(Constants.PARAM_API_BASE_URI_KEY, Constants.SOOS_DEFAULT_API_URL);
+            return list;
         }
 
-        final String user = getChangeUser(run);
-        if(!user.isEmpty()) {
-            map.put(Constants.PARAM_CONTRIBUTING_DEVELOPER_KEY, user);
-            map.put(Constants.PARAM_CONTRIBUTING_DEVELOPER_ENV_KEY, "JENKINS_ENTRY_USER");
-        }
-        return map;
-    }
-
-    private void setEnvProperties(Map<String, String> map) {
-        map.forEach((key, value) -> {
-                System.setProperty(key, value);
-        });
-    }
-
-    private String addSoosDirToExclusion(String dirs) {
-        if (StringUtils.isNotBlank(dirs)) {
-            StringBuilder stringBuilder = new StringBuilder(dirs).append(",").append(PluginConstants.SOOS_DIR_NAME);
-            return stringBuilder.toString();
-        }
-        return PluginConstants.SOOS_DIR_NAME;
     }
 
     private String getVersionFromProperties() {

@@ -2,7 +2,6 @@ package io.soos;
 
 import hudson.EnvVars;
 import io.soos.commons.PluginConstants;
-import io.soos.integration.validators.OSValidator;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -25,9 +24,6 @@ public class Utils {
         final String BUILD_ID = ObjectUtils.isNotEmpty(previousBuild) ? String.valueOf(previousBuild) : env.get(PluginConstants.BUILD_ID);
         final String RESULT_URL_FILE = PluginConstants.RESULT_URL_FILE;
         String pathSeparator = PluginConstants.SLASH;
-        if ( OSValidator.isWindows() ){
-            pathSeparator = PluginConstants.BACK_SLASH;
-        }
         StringBuilder buildPath = new StringBuilder();
         buildPath.append(JENKINS_HOME_PATH);
         buildPath.append(pathSeparator);
@@ -92,6 +88,7 @@ public class Utils {
 
     public static String getBranchName(String branchName){
         String[] arr = branchName.split("/");
-        return arr[1];
+
+        return arr.length == 2 ? arr[1] : branchName;
     }
 }

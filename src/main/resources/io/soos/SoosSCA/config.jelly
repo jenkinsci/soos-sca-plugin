@@ -21,13 +21,19 @@
     <f:entry title="On Failure" field="onFailure">
         <f:select />
     </f:entry>
-    <f:entry title="Analysis Result Max Wait" field="resultMaxWait">
-        <f:textbox default="${descriptor.defaultAnalysisResultMaxWait}"/>
-    </f:entry>
-    <f:entry title="Analysis Result Polling Interval" field="resultPollingInterval">
-        <f:textbox default="${descriptor.defaultAnalysisResultPollingInterval}"/>
-    </f:entry>
     <f:entry title="API Base URL" field="apiBaseURI">
         <f:textbox default="${descriptor.defaultBaseURI}"/>
+    </f:entry>
+    <f:entry title="Log Level" field="logLevel">
+        <f:select />
+    </f:entry>
+    <f:entry title="Enable Verbose Logging" field="verbose">
+        <f:checkbox />
+    </f:entry>
+    <f:entry title="Output Format" field="outputFormat">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Node.js Path" field="nodePath">
+        <f:textbox/>
     </f:entry>
 </j:jelly>
