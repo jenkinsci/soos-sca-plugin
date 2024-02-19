@@ -40,48 +40,6 @@ public class Utils {
         return buildPath.toString();
     }
 
-    public static void saveReportStatusUrl(String reportStatusUrl, EnvVars env) {
-        String resultFilePath = getBuildPath(env, null);
-        File file = new File(resultFilePath);
-        try {
-            file.createNewFile();
-            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-            writer.write(reportStatusUrl);
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static String getReportStatusUrl(EnvVars env, Integer previousBuild){
-        String resultFilePath = getBuildPath(env, previousBuild);
-        File file = new File(resultFilePath);
-        String resultStatusUrl = "";
-        try {
-            Scanner reader = new Scanner(file);
-            while (reader.hasNextLine()) {
-                resultStatusUrl = reader.nextLine();
-            }
-            reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return resultStatusUrl;
-    }
-
-    public static String getVersionFromProperties(){
-        MavenXpp3Reader reader = new MavenXpp3Reader();
-        Model model;
-        try {
-            model = reader.read(new FileReader(PluginConstants.POM_FILE));
-            return model.getVersion();
-        } catch (XmlPullParserException | IOException e) {
-            StringBuilder error = new StringBuilder("Cannot read file ").append("'").append(PluginConstants.POM_FILE).append("'");
-            LOG.error(error.toString(), e);
-        }
-        return null;
-    }
-
     public static String getOperatingSystem() {
         return System.getProperty(PluginConstants.OS_NAME).toLowerCase();
     }

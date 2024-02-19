@@ -14,7 +14,6 @@ import io.soos.commons.PluginConstants;
 import io.soos.integration.Configuration;
 import io.soos.integration.Enums;
 import io.soos.integration.SoosScaWrapper;
-import io.soos.web.ResultDisplayAction;
 import lombok.Getter;
 import lombok.Setter;
 import net.sf.json.JSONObject;
@@ -43,11 +42,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
     private Secret SOOSApiKey;
     private Secret SOOSClientId;
     private String apiBaseURI;
-    private String branchName;
-    private String branchURI;
-    private String buildURI;
-    private String buildVersion;
-    private String commitHash;
     private String dirsToExclude;
     private String filesToExclude;
     private String logLevel;
@@ -59,8 +53,7 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
     private Boolean verbose;
 
     @DataBoundConstructor
-    public SoosSCA(Secret SOOSApiKey, Secret SOOSClientId, String apiBaseURI, String branchName,
-                   String branchURI, String buildURI, String buildVersion, String commitHash,
+    public SoosSCA(Secret SOOSApiKey, Secret SOOSClientId, String apiBaseURI,
                    String dirsToExclude, String filesToExclude, String logLevel, String nodePath,
                    String onFailure, String outputFormat, String packageManagers, String projectName,
                    Boolean verbose) {
@@ -68,11 +61,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
         this.SOOSApiKey = SOOSApiKey;
         this.SOOSClientId = SOOSClientId;
         this.apiBaseURI = apiBaseURI;
-        this.branchName = branchName;
-        this.branchURI = branchURI;
-        this.buildURI = buildURI;
-        this.buildVersion = buildVersion;
-        this.commitHash = commitHash;
         this.dirsToExclude = dirsToExclude;
         this.filesToExclude = filesToExclude;
         this.logLevel = logLevel;
@@ -95,12 +83,12 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
             Configuration configuration = new Configuration();
             configuration.setApiKey(SOOSApiKey.getPlainText());
             configuration.setApiURL(apiBaseURI);
-            configuration.setBranchName(branchName);
-            configuration.setBranchURI(branchURI);
-            configuration.setBuildURI(buildURI);
-            configuration.setBuildVersion(buildVersion);
+            configuration.setBranchName(Utils.getBranchName(env.get(PluginConstants.GIT_BRANCH, "")));
+            configuration.setBranchURI(env.get(PluginConstants.GIT_URL));
+            configuration.setBuildURI(env.get(PluginConstants.BUILD_URL));
+            configuration.setBuildVersion(env.get(PluginConstants.BUILD_ID));
             configuration.setClientId(SOOSClientId.getPlainText());
-            configuration.setCommitHash(commitHash);
+            configuration.setCommitHash(env.get(PluginConstants.GIT_COMMIT));
             configuration.setDirectoriesToExclude(dirsToExclude);
             configuration.setFilesToExclude(filesToExclude);
             configuration.setIntegrationName(PluginConstants.INTEGRATION_NAME);
@@ -119,11 +107,24 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
             }
 
             SoosScaWrapper soosScaWrapper = new SoosScaWrapper(configuration, listener.getLogger());
-            soosScaWrapper.runSca();
+            final int exitCode =  soosScaWrapper.runSca();
+
+            if (exitCode != 0) {
+                StringBuilder errorMsg = new StringBuilder("SOOS SCA failed with exit code: ").append(exitCode);
+                if (this.onFailure.equalsIgnoreCase(PluginConstants.FAIL_THE_BUILD)) {
+                    errorMsg.append(" - the build has failed!");
+                    listener.error(errorMsg.toString());
+                    run.setResult(Result.FAILURE);
+                    return;
+                }
+                errorMsg.append(" - Continuing the build... ");
+                run.setResult(Result.UNSTABLE);
+                listener.getLogger().println(errorMsg);
+            }
 
         } catch (Exception e) {
             StringBuilder errorMsg = new StringBuilder("SOOS SCA cannot be done, error: ").append(e);
-            if (this.onFailure.equals(PluginConstants.FAIL_THE_BUILD)) {
+            if (this.onFailure.equalsIgnoreCase(PluginConstants.FAIL_THE_BUILD)) {
                 errorMsg.append(" - the build has failed!");
                 listener.error(errorMsg.toString());
                 run.setResult(Result.FAILURE);
@@ -132,7 +133,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
             errorMsg.append(" - Continuing the build... ");
             listener.getLogger().println(errorMsg);
         }
-        run.addAction(new ResultDisplayAction(run, resultURL));
     }
 
     private String createCustomDisplayName(Run<?, ?> run, String mode) throws IOException {
