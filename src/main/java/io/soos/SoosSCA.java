@@ -1,5 +1,5 @@
-
 package io.soos;
+
 import java.io.*;
 import java.util.*;
 
@@ -101,13 +101,13 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
             configuration.setVerbose(verbose);
 
             final String user = getChangeUser(run);
-            if(user != null && !user.isEmpty()) {
+            if (user != null && !user.isEmpty()) {
                 configuration.setContributingDeveloperId(user);
                 configuration.setContributingDeveloperSource("JENKINS_ENTRY_USER");
             }
 
             SoosScaWrapper soosScaWrapper = new SoosScaWrapper(configuration, listener.getLogger());
-            final int exitCode =  soosScaWrapper.runSca();
+            final int exitCode = soosScaWrapper.runSca();
 
             if (exitCode != 0) {
                 StringBuilder errorMsg = new StringBuilder("SOOS SCA failed with exit code: ").append(exitCode);
@@ -246,7 +246,8 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
         }
         if (userName == null) {
             ItemGroup<?> ig = run.getParent().getParent();
-            nextItem: for (Item item : ig.getItems()) {
+            nextItem:
+            for (Item item : ig.getItems()) {
                 if (!item.getFullDisplayName().equals(run.getFullDisplayName())
                         && !item.getFullDisplayName().equals(run.getParent().getFullDisplayName())) {
                     continue;

@@ -3,20 +3,15 @@ package io.soos;
 import hudson.EnvVars;
 import io.soos.commons.PluginConstants;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.*;
-import java.util.Scanner;
 
 public class Utils {
 
     private static final Logger LOG = LoggerFactory.getLogger(Utils.class);
 
 
-    public static String getBuildPath(EnvVars env, Integer previousBuild){
+    public static String getBuildPath(EnvVars env, Integer previousBuild) {
         final String JENKINS_HOME_PATH = env.get(PluginConstants.JENKINS_HOME);
         final String JOBS_DIR = PluginConstants.JOBS_DIR;
         final String JOB_BASE_NAME = env.get(PluginConstants.JOB_BASE_NAME);
@@ -44,7 +39,7 @@ public class Utils {
         return System.getProperty(PluginConstants.OS_NAME).toLowerCase();
     }
 
-    public static String getBranchName(String branchName){
+    public static String getBranchName(String branchName) {
         String[] arr = branchName.split("/");
 
         return arr.length == 2 ? arr[1] : branchName;
