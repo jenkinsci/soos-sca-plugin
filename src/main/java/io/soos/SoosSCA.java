@@ -1,7 +1,6 @@
 package io.soos;
 
 import java.io.*;
-import java.util.*;
 
 import hudson.*;
 import hudson.model.*;
@@ -75,9 +74,6 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
     @Override
     public void perform(Run<?, ?> run, FilePath workspace, EnvVars env, Launcher launcher, TaskListener listener)
             throws InterruptedException, IOException {
-        Map<String, String> map = new HashMap<>();
-
-        String resultURL = null;
 
         try {
             Configuration configuration = new Configuration();
