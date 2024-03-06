@@ -117,18 +117,25 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
                 run.setResult(Result.UNSTABLE);
                 listener.getLogger().println(errorMsg);
             }
-
+        } catch (InterruptedException e) {
+            handleExceptions(e, run, listener);
+        } catch (IOException e) {
+            handleExceptions(e, run, listener);
         } catch (Exception e) {
-            StringBuilder errorMsg = new StringBuilder("SOOS SCA cannot be done, error: ").append(e);
-            if (this.onFailure.equalsIgnoreCase(PluginConstants.FAIL_THE_BUILD)) {
-                errorMsg.append(" - the build has failed!");
-                listener.error(errorMsg.toString());
-                run.setResult(Result.FAILURE);
-                return;
-            }
-            errorMsg.append(" - Continuing the build... ");
-            listener.getLogger().println(errorMsg);
+            handleExceptions(e, run, listener);
         }
+    }
+
+    private void handleExceptions(Exception e, Run<?, ?> run, TaskListener listener){
+        StringBuilder errorMsg = new StringBuilder("SOOS SCA cannot be done, error: ").append(e);
+        if (this.onFailure.equalsIgnoreCase(PluginConstants.FAIL_THE_BUILD)) {
+            errorMsg.append(" - the build has failed!");
+            listener.error(errorMsg.toString());
+            run.setResult(Result.FAILURE);
+            return;
+        }
+        errorMsg.append(" - Continuing the build... ");
+        listener.getLogger().println(errorMsg);
     }
 
     private String createCustomDisplayName(Run<?, ?> run, String mode) throws IOException {
