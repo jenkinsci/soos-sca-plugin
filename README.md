@@ -26,6 +26,7 @@ To use SOOS SCA Plugin you need to:
 * Cargo - Rust
 * Composer - PHP
 * Dart PM (Pub Package Manager) - Dart
+* Go Modules - GoLang
 * Gradle - Java & Kotlin
 * Homebrew - (various languages)
 * Maven - Java
