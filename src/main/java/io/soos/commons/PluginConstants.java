@@ -20,4 +20,7 @@ public final class PluginConstants {
     public static final String BUILDS_DIR = "builds";
     public static final String SLASH = "/";
     public static final String RESULT_URL_FILE = "resultUrl.txt";
+    public static final String CONTRIBUTING_DEVELOPER_SOURCE_NAME = "JENKINS_ENTRY_USER";
+    public static final String CONTRIBUTING_DEVELOPER_SOURCE = "EnvironmentVariable";
+    public static final String WORKSPACE = "WORKSPACE";
 }

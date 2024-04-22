@@ -92,6 +92,8 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
             configuration.setNodePath(nodePath);
             configuration.setOnFailure(onFailure);
             configuration.setOutputFormat(outputFormat);
+            configuration.setWorkingDirectory(env.get(PluginConstants.WORKSPACE));
+            configuration.setSourceCodePath(env.get(PluginConstants.WORKSPACE));
             configuration.setPackageManagers(packageManagers);
             configuration.setProjectName(projectName);
             configuration.setVerbose(verbose);
@@ -99,7 +101,8 @@ public class SoosSCA extends Builder implements SimpleBuildStep {
             final String user = getChangeUser(run);
             if (user != null && !user.isEmpty()) {
                 configuration.setContributingDeveloperId(user);
-                configuration.setContributingDeveloperSource("JENKINS_ENTRY_USER");
+                configuration.setContributingDeveloperSourceName(PluginConstants.CONTRIBUTING_DEVELOPER_SOURCE_NAME);
+                configuration.setContributingDeveloperSource(PluginConstants.CONTRIBUTING_DEVELOPER_SOURCE);
             }
 
             SoosScaWrapper soosScaWrapper = new SoosScaWrapper(configuration, listener.getLogger());
